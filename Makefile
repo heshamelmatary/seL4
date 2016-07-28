@@ -15,10 +15,10 @@
 ### Build parameters
 ############################################################
 
-SEL4_ARCH_LIST:=aarch32 ia32 x86_64
-ARCH_LIST:=arm x86
-CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15 cortex-a57
-PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1 hikey
+SEL4_ARCH_LIST:=aarch32 ia32 x86_64 riscv
+ARCH_LIST:=arm x86 riscv
+CPU_LIST:=arm1136jf-s ixp420 cortex-a7 cortex-a8 cortex-a9 cortex-a15
+PLAT_LIST:=imx31 pc99 ixp420 omap3 am335x exynos4 exynos5 imx6 imx7 apq8064 zynq7000 allwinnerA20 tk1 hikey spike
 ARMV_LIST:=armv6 armv7-a armv8-a
 
 ifndef SOURCE_ROOT
@@ -41,6 +41,10 @@ $(if $(filter ${ARCH},${ARCH_LIST}),, \
 
 $(if $(filter ${PLAT},${PLAT_LIST}),, \
 	$(error PLAT ${PLAT} invalid or undefined, should be one of [${PLAT_LIST}]))
+
+ifeq (${ARCH}, riscv)
+SEL4_ARCH:=riscv
+endif
 
 ifeq (${ARCH}, arm)
 $(if $(filter ${CPU},${CPU_LIST}),, \

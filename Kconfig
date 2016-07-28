@@ -34,7 +34,7 @@ config KERNEL_MASTER
 config WORD_SIZE
     int
     default 32 if ARCH_IA32 || ARCH_AARCH32
-    default 64 if ARCH_X86_64
+    default 64 if ARCH_X86_64 || ARCH_RISCV
 
 menu "seL4 System"
 
@@ -49,6 +49,10 @@ menu "seL4 System"
 
         config ARCH_ARM
             bool "ARM"
+
+        config ARCH_RISCV
+            bool "RISCV"
+
     endchoice
 
     config ARCH_X86_64
@@ -89,6 +93,21 @@ menu "seL4 System"
     config ARM_CORTEX_A57
         bool
         default n
+
+    choice
+       prompt "RISC-V CPU selection"
+       depends on ARCH_RISCV
+       help
+            Select the RISC-V CPU Implementation
+
+        config ROCKET_CHIP
+            bool "ROCKET_CHIP"
+            depends on ARCH_RISCV
+            select ARCH_RISCV64
+            help
+                Support for RV64 Rocket Chip
+
+    endchoice
 
     config PLAT_EXYNOS54XX
        bool
@@ -245,6 +264,11 @@ menu "seL4 System"
             help
                 Support for HiKey platform.
 
+        config PLAT_SPIKE
+            bool "PLAT_SPIKE"
+            depends on ARCH_RISCV
+            help
+                Support for spike platform
     endchoice
 
     config ARM_HYPERVISOR_SUPPORT
@@ -333,6 +357,7 @@ menu "seL4 System Parameters"
 
     config FASTPATH
         bool "Enable fastpath"
+        depends on !ARCH_RISCV
         default y
         help
             Enable IPC fastpath

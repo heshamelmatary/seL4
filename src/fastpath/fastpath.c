@@ -15,6 +15,8 @@
 #endif
 #include <benchmark_utilisation.h>
 
+/* TODO: Implement fastpath for RISC-V */
+#ifndef ARCH_RISCV
 void
 #ifdef ARCH_X86
 NORETURN
@@ -386,3 +388,4 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
     fastpath_restore(badge, msgInfo, ksCurThread);
 }
+#endif /* !ARCH_RISCV */

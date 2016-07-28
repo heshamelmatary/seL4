@@ -11,17 +11,17 @@
 #ifndef BENCHMARK_UTILISATION_H
 #define BENCHMARK_UTILISATION_H
 
+#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
+#include <armv/benchmark_irqHandler.h>
+#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
+
+#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 #include <config.h>
 #include <arch/benchmark.h>
 #include <benchmark_utilisation_types.h>
 #include <arch/api/constants.h>
 #include <model/statedata.h>
 
-#ifdef CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT
-#include <armv/benchmark_irqHandler.h>
-#endif /* CONFIG_ARM_ENABLE_PMU_OVERFLOW_INTERRUPT */
-
-#ifdef CONFIG_BENCHMARK_TRACK_UTILISATION
 extern bool_t benchmark_log_utilisation_enabled;
 extern timestamp_t ksEnter;
 extern timestamp_t benchmark_start_time;
