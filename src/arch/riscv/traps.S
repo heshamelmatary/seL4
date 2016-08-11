@@ -71,7 +71,7 @@ trap_entry:
   csrr s0, scause
   csrr s3, scause
 
-  srli s0, s0, 31
+  srli s0, s0, 63
   li   s1, 0x1
   beq  s0, s1, handle_irq
 
