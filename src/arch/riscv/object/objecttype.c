@@ -42,9 +42,16 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
+    case cap_asid_control_cap:
+    case cap_asid_pool_cap:
+        ret.cap = cap;
+        ret.status = EXCEPTION_NONE;
+        return ret;
+
     default:
         /* This assert has no equivalent in haskell,
          * as the options are restricted by type */
+        printf("Invalid arch cap type %d\n", cap_get_capType(cap));
         fail("Invalid arch cap type");
     }
 }
