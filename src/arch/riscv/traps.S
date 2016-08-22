@@ -89,6 +89,8 @@ _syscall:
   addi s2, s2, 4
   csrw sepc, s2
 
+  SREG s2, 33*REGBYTES(t0)
+
   /* Move systemcall number to a0 */
   mv a0, a7
 
@@ -160,6 +162,7 @@ ret_user:
   beq  t1, tp, _normal_exit #ksCurThread (and tp)  has changes, jump to the new one
 _context_switch:
   add tp, t1, x0 /* get restored tp */
+  LREG ra, 33*REGBYTES(t0)
   csrw sepc, ra
 
 _normal_exit:

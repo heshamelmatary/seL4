@@ -54,6 +54,7 @@ enum _register {
 
     /* End of GP registers, the following are additional kernel-saved state. */
     SSTATUS,
+    SEPC,
 
     n_contextRegisters
 };
