@@ -343,8 +343,9 @@ try_init_kernel(
     /* convert the remaining free memory into UT objects and provide the caps */
     if (!create_untypeds(
                 root_cnode_cap,
-    (region_t) {
-    kernelBase, (pptr_t)ki_boot_end
+    /* don't retype kernek boot area, vectors are still used */
+    (region_t) { 0
+    //kernelBase, (pptr_t)ki_boot_end
     } /* reusable boot code/data */
             )) {
         return false;
