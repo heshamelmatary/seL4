@@ -21,11 +21,13 @@ Arch_switchToThread(tcb_t *tcb)
     setVMRoot(tcb);
 
     /* If this is the first time to run the thread, set SEPC to ra (entry point)
-     * this is a sepcial case where this next task is getting runnable (context switch)
+     * this is a sepcial case where this next task is getting runnable (context switch).
      *
+     * Floating point has to be enabled also for the first-time-to-run thread
      */
     if (tcb->tcbArch.tcbContext.registers[SEPC] == 0) {
         setRegister(tcb, SEPC, tcb->tcbArch.tcbContext.registers[ra]);
+        setRegister(tcb, SSTATUS, (word_t) SSTATUS_FS);
     }
     *riscvKSGlobalsFrame = tcb->tcbIPCBuffer;
 }
