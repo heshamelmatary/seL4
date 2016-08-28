@@ -45,9 +45,13 @@ typedef struct seL4_UserContext_ {
     /* FIXME: All registers for now */
     seL4_Word ra;
     seL4_Word sp;
+    seL4_Word x3;
+    seL4_Word x4;
     seL4_Word t0;
     seL4_Word t1;
     seL4_Word t2;
+    seL4_Word s0;
+    seL4_Word s1;
     seL4_Word a0;
     seL4_Word a1;
     seL4_Word a2;
@@ -56,10 +60,6 @@ typedef struct seL4_UserContext_ {
     seL4_Word a5;
     seL4_Word a6;
     seL4_Word a7;
-    seL4_Word t3;
-    seL4_Word t4;
-    seL4_Word t5;
-    seL4_Word t6;
 } seL4_UserContext;
 
 typedef enum {

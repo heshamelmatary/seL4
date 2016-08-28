@@ -15,11 +15,11 @@ const register_t msgRegisters[] = {
 };
 
 const register_t frameRegisters[] = {
-    ra, sp, a0, a1, a2, a3, a4, a5, a6, a7
+    ra, sp, x3, x4, t0, t1, t2, s0, s1, a0, a1, a2, a3, a4, a5, a6, a7
 };
 
 const register_t gpRegisters[] = {
-    a1, a2, a3, a4, a5, a6, a7
+
 };
 
 const register_t exceptionMessage[] = {
