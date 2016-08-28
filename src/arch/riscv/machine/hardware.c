@@ -15,11 +15,11 @@
 word_t PURE
 getRestartPC(tcb_t *thread)
 {
-    return getRegister(thread, LR);
+    return getRegister(thread, SEPC);
 }
 
 void
 setNextPC(tcb_t *thread, word_t v)
 {
-    setRegister(thread, LR, v);
+    setRegister(thread, SEPC, v);
 }

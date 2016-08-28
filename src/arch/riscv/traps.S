@@ -119,7 +119,7 @@ ret_user:
   ld t0, 0(t0)
 
   LREG x1, 32*REGBYTES(t0)
-  csrw sstatus, x1 
+  csrw sstatus, x1
 
   LREG ra, 1*REGBYTES(t0)
   LREG sp, 2*REGBYTES(t0)
@@ -127,7 +127,6 @@ ret_user:
 
   /* skip tp */
   /* skip x5/t0 */
-  LREG t1, 6*REGBYTES(t0)
   LREG t2, 7*REGBYTES(t0)
   LREG s0, 8*REGBYTES(t0)
   LREG s1, 9*REGBYTES(t0)
@@ -154,19 +153,16 @@ ret_user:
   LREG t5, 30*REGBYTES(t0)
   LREG t6, 31*REGBYTES(t0)
 
-  /* Check if there is a new higher priority task has taken control and
-   * if so, set sepc to ra and not sepc + 4
-   */
   /* Get next restored tp */
   LREG t1, 4*REGBYTES(t0)
-  beq  t1, tp, _normal_exit #ksCurThread (and tp)  has changes, jump to the new one
-_context_switch:
-  add tp, t1, x0 /* get restored tp */
-  LREG ra, 33*REGBYTES(t0)
-  csrw sepc, ra
 
-_normal_exit:
-  add tp, t1, x0 /* get restored tp */
+  /* get restored tp */
+  add tp, t1, x0
+
+  /* get sepc */
+  LREG t1, 33*REGBYTES(t0)
+  csrw sepc, t1
+
   LREG t1, 6*REGBYTES(t0)
   csrrw t0, sscratch, t0
   eret
