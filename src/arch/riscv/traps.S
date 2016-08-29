@@ -67,6 +67,10 @@ trap_entry:
 
   li sp, PPTR_KERNEL_STACK_TOP
 
+  csrr s2,  sepc
+  csrw sepc, s2
+  SREG s2, 33*REGBYTES(t0)
+
   /* Check if it's an interrupt */
   csrr s0, scause
   csrr s3, scause
