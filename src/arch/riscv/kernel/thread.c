@@ -35,7 +35,7 @@ Arch_switchToThread(tcb_t *tcb)
 BOOT_CODE void
 Arch_configureIdleThread(tcb_t *tcb)
 {
-    setRegister(tcb, ra, (word_t)idleThreadStart);
+    setRegister(tcb, SEPC, (word_t)idleThreadStart);
 
     /* FIXME: don't use magic numbers
      * Enable interrupts and keep working in supervisor mode */
