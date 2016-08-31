@@ -66,6 +66,7 @@
 #include <arch/linker.h>
 
 enum vm_fault_type {
+    RISCVInstructionAccessFault = 1,
     RISCVLoadAccessFault = 5,
     RISCVStoreAccessFault = 7
 };
