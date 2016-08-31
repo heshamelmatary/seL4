@@ -546,8 +546,25 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
 exception_t
 handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
-    printf("Hit unimplemented handleVMFault \n");
-    halt();
+    uint32_t addr;
+    uint32_t fault;
+
+    addr = read_csr(sbadaddr);
+
+    switch (vm_faultType) {
+    case RISCVLoadAccessFault:
+        current_fault = fault_vm_fault_new(addr, RISCVLoadAccessFault, false);
+        return EXCEPTION_FAULT;
+    case RISCVStoreAccessFault:
+        current_fault = fault_vm_fault_new(addr, RISCVStoreAccessFault, false);
+        return EXCEPTION_FAULT;
+    case RISCVInstructionAccessFault:
+        current_fault = fault_vm_fault_new(addr, RISCVInstructionAccessFault, true);
+        return EXCEPTION_FAULT;
+
+    default:
+        fail("Invalid VM fault type");
+    }
 }
 
 void deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
