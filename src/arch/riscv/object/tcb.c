@@ -82,7 +82,7 @@ setMRs_fault(tcb_t *sender, tcb_t* receiver, word_t *receiveIPCBuffer)
                                      sender->tcbLookupFailure, 3);
 
     case fault_vm_fault:
-        setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender));
+        setMR(receiver, receiveIPCBuffer, 0, getRestartPC(sender) - 4);
         setMR(receiver, receiveIPCBuffer, 1,
               fault_vm_fault_get_address(sender->tcbFault));
         setMR(receiver, receiveIPCBuffer, 2,
