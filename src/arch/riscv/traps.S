@@ -86,7 +86,11 @@ trap_entry:
 
 _error:
   la x1, halt
-  jr x1
+  jalr x1
+
+  /* fault handler success, and we are back */
+  j ret_user
+
     /* Set the return address to sepc + 4 in the case of a systemcall */
 _syscall:
   csrr s2,  sepc
