@@ -25,8 +25,7 @@ Arch_switchToThread(tcb_t *tcb)
      *
      * Floating point has to be enabled also for the first-time-to-run thread
      */
-    if (tcb->tcbArch.tcbContext.registers[SEPC] == 0) {
-        setRegister(tcb, SEPC, tcb->tcbArch.tcbContext.registers[ra]);
+    if (tcb->tcbArch.tcbContext.registers[ra] == 0) {
         setRegister(tcb, SSTATUS, (word_t) SSTATUS_FS);
     }
     *riscvKSGlobalsFrame = tcb->tcbIPCBuffer;

@@ -43,6 +43,7 @@ typedef seL4_CPtr seL4_RISCV_IPI;
 
 typedef struct seL4_UserContext_ {
     /* FIXME: All registers for now */
+    seL4_Word sepc;
     seL4_Word ra;
     seL4_Word sp;
     seL4_Word x3;
@@ -59,7 +60,6 @@ typedef struct seL4_UserContext_ {
     seL4_Word a4;
     seL4_Word a5;
     seL4_Word a6;
-    seL4_Word a7;
 } seL4_UserContext;
 
 typedef enum {

@@ -10,6 +10,7 @@
   -->
 <api>
 	<struct name="seL4_UserContext">
+		<member name="sepc"/>
 		<member name="ra"/>
 		<member name="sp"/>
 		<member name="x3"/>
@@ -26,7 +27,6 @@
 		<member name="a4"/>
 		<member name="a5"/>
 		<member name="a6"/>
-		<member name="a7"/>
     </struct>
 
   <interface name="seL4_RISCV_PageDirectory">
