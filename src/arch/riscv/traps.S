@@ -67,13 +67,12 @@ trap_entry:
 
   li sp, PPTR_KERNEL_STACK_TOP
 
-  csrr s2,  sepc
-  csrw sepc, s2
-  SREG s2, 33*REGBYTES(t0)
-
   /* Check if it's an interrupt */
   csrr s0, scause
   csrr s3, scause
+
+  csrr s2,  sepc
+  SREG s2, 33*REGBYTES(t0)
 
   srli s0, s0, 63
   li   s1, 0x1
@@ -93,6 +92,7 @@ _error:
 
     /* Set the return address to sepc + 4 in the case of a systemcall */
 _syscall:
+
   csrr s2,  sepc
   addi s2, s2, 4
   csrw sepc, s2
@@ -104,8 +104,10 @@ _syscall:
 
   /* Check that syscall number is in range */
   li  s0, SYSCALL_MIN
+  li  s1, SYSCALL_MAX
   blt a0, s0, unknownsyscall
-  nop
+  bgt a0, s1, unknownsyscall
+
   la  s0, handleSyscall
   jalr s0
   /* SREG s2, 1*REGBYTES(t0) */
