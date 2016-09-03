@@ -6,6 +6,8 @@
 #define PT_SP               (2  * 8)
 #define PT_A0               (10 * 8)
 
+#define SSTATUS_FS 0x00006000
+
 #ifndef __ASSEMBLER__
 
 #include <stdint.h>
@@ -83,7 +85,8 @@ typedef struct user_context user_context_t;
 
 static inline void Arch_initContext(user_context_t* context)
 {
-    /*TODO: Status registers, config registers config */
+    /* Always enable floating point for new threads */
+    context->registers[SSTATUS] = SSTATUS_FS;
 }
 
 static inline word_t CONST
