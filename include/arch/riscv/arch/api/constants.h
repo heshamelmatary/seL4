@@ -25,6 +25,4 @@
 #define seL4_HugePageBits       30
 #define seL4_ASIDPoolBits       12
 
-#define EXPECTED_TCB_SIZE sizeof(tcb_t)
-
 #endif

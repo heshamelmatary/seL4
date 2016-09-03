@@ -5,7 +5,6 @@
 #include <arch/types.h>
 #include <arch/object/structures.h>
 #include <arch/machine/hardware.h>
-#include <arch/machine/page.h>
 #include <arch/encoding.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/statedata.h>
