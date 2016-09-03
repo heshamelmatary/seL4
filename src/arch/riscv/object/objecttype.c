@@ -80,6 +80,15 @@ Arch_finaliseCap(cap_t cap, bool_t final)
                       (void *)cap_frame_cap_get_capFBasePtr(cap));
         }
         break;
+    case cap_page_table_cap:
+        if (final && cap_page_table_cap_get_capPTIsMapped(cap)) {
+            unmapPageTable(
+                cap_page_table_cap_get_capPTMappedASID(cap),
+                cap_page_table_cap_get_capPTMappedAddress(cap),
+                PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap))
+            );
+        }
+        break;
     }
     return cap_null_cap_new();
 }
