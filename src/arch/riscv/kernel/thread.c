@@ -28,9 +28,8 @@ Arch_configureIdleThread(tcb_t *tcb)
 {
     setRegister(tcb, SEPC, (word_t)idleThreadStart);
 
-    /* FIXME: don't use magic numbers
-     * Enable interrupts and keep working in supervisor mode */
-    setRegister(tcb, SSTATUS, (word_t) 0x122);
+    /* Enable interrupts and keep working in supervisor mode */
+    setRegister(tcb, SSTATUS, (word_t) SSTATUS_SPP | SSTATUS_SPIE | SSTATUS_SIE);
 }
 
 void
