@@ -22,5 +22,5 @@ END_FUNC(idle_thread)
 .bss
 .balign  4096
 _idle_tls:
-.space  8192
+.space 4096
 
