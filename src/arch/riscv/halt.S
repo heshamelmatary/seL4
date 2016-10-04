@@ -9,12 +9,3 @@
  */
 
 #include <machine/assembler.h>
-
-.section .text, "ax"
-
-#ifdef DEBUG
-.section .rodata
-halt_message:
-.asciz "halting..."
-#endif
-
