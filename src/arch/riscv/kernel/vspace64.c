@@ -559,6 +559,7 @@ handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
         current_fault = fault_vm_fault_new(addr, RISCVStoreAccessFault, false);
         return EXCEPTION_FAULT;
     case RISCVInstructionAccessFault:
+        setRegister(thread, SEPC, getRegister(thread, SEPC) + 4);
         current_fault = fault_vm_fault_new(addr, RISCVInstructionAccessFault, true);
         return EXCEPTION_FAULT;
 
@@ -1174,6 +1175,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
                            word_t *buffer)
 {
     switch (label) {
+    case RISCVPageRemap:
     case RISCVPageMap: {
 
         word_t vaddr, vtop, w_rightsMask;
@@ -1235,7 +1237,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
                     false;
                 return EXCEPTION_SYSCALL_ERROR;
             }
-            if (unlikely(lu_ret.status == EXCEPTION_NONE && *((uint64_t *)lu_ret.ptSlot) != NULL)) {
+            if (unlikely(lu_ret.status == EXCEPTION_NONE && *((uint64_t *)lu_ret.ptSlot) != NULL) && label != RISCVPageRemap) {
                 userError("RISCVPageMap: The page is already mapped %p", vaddr);
                 current_syscall_error.type =
                     seL4_DeleteFirst;
@@ -1353,10 +1355,11 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         }
     }
 
+                       /*
     case RISCVPageRemap: {
         printf("RISCVPageRemap: not implemented yet \n");
         halt();
-    }
+    } */
     case RISCVPageUnmap: {
         setThreadState(ksCurThread, ThreadState_Restart);
         return performPageInvocationUnmap(cap, cte);
