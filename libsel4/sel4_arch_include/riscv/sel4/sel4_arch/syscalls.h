@@ -264,7 +264,7 @@ seL4_NBRecv(seL4_CPtr src, seL4_Word* sender)
     /* Perform the system call. */
     register seL4_Word scno asm("a7") = seL4_SysNBRecv;
     asm volatile ("ecall" : "+r"(src_and_badge) , "=r"(info.words[0]), "=r"(msg0), "=r"(msg1), "=r"(msg2), \
-                  "=r"(msg3): "r"(scno) : "memory");
+                  "=r"(msg3): "r"(scno) : "memory", "a1");
 
     /* Write the message back out to memory. */
     seL4_SetMR(0, msg0);
