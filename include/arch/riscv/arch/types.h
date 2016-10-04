@@ -15,13 +15,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#if defined(X86_32)
-compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
-#elif defined(X86_64)
 compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
-#elif defined(RISCV)
-compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
-#endif
 
 typedef uint64_t word_t;
 typedef word_t vptr_t;
