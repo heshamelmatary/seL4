@@ -5,6 +5,7 @@
 #include <arch/object/structures.h>
 
 #ifdef CONFIG_ENABLE_BENCHMARK
+#warning "RISC-V doesn't support timestamp() function yet"
 
 extern uint64_t ksEntry;
 extern uint64_t ksExit;

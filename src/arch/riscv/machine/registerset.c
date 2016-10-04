@@ -15,7 +15,7 @@ const register_t msgRegisters[] = {
 };
 
 const register_t frameRegisters[] = {
-    SEPC, ra, sp, x3, x4, t0, t1, t2, s0, s1, a0, a1, a2, a3, a4, a5, a6
+    SEPC, ra, sp, gp, tp, t0, t1, t2, s0, s1, a0, a1, a2, a3, a4, a5, a6
 };
 
 const register_t gpRegisters[] = {
