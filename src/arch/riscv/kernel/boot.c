@@ -136,10 +136,6 @@ init_freemem(region_t ui_reg)
         {
             .start = ui_reg.start,
             .end = ui_reg.end
-        },
-        {
-            .start = (pptr_t)ki_end,
-            .end = (pptr_t)ki_end
         }
     };
 
