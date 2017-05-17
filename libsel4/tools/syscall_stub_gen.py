@@ -56,6 +56,7 @@ WORD_SIZE_BITS_ARCH = {
     "ia64": 64,
     "x86_64": 64,
     "arm_hyp": 32,
+    "riscv": 64,
 }
 
 MESSAGE_REGISTERS_FOR_ARCH = {
@@ -64,6 +65,7 @@ MESSAGE_REGISTERS_FOR_ARCH = {
     "ia32": 2,
     "x86_64": 4,
     "arm_hyp": 4,
+    "riscv": 4,
 }
 
 WORD_CONST_SUFFIX_BITS = {
@@ -324,6 +326,16 @@ def init_arch_types(wordsize):
             CapType("seL4_X86_EPTPT", wordsize),
             StructType("seL4_VCPUContext", wordsize * 7 ,wordsize),
             StructType("seL4_UserContext", wordsize * 19, wordsize),
+        ],
+        "riscv" : [
+            Type("seL4_RISCV_VMAttributes", wordsize, wordsize),
+            CapType("seL4_RISCV_Page", wordsize),
+            CapType("seL4_RISCV_PageTable", wordsize),
+            CapType("seL4_RISCV_LVL2PageTable", wordsize),
+            CapType("seL4_RISCV_PageDirectory", wordsize),
+            CapType("seL4_RISCV_ASIDControl", wordsize),
+            CapType("seL4_RISCV_ASIDPool", wordsize),
+            StructType("seL4_UserContext", wordsize * 17, wordsize),
         ]
     }
 
