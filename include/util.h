@@ -20,6 +20,9 @@
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define PASTE(a, b) a ## b
 
+#define _STRINGIFY(a) #a
+#define STRINGIFY(a) _STRINGIFY(a)
+
 #ifndef __ASSEMBLER__
 
 #define NULL ((void *)0)
@@ -93,6 +96,47 @@ long PURE str_to_long(const char* str);
 int __builtin_clzl (unsigned long x);
 int __builtin_ctzl (unsigned long x);
 
+#ifdef CONFIG_ARCH_RISCV
+uint32_t __clzsi2(uint32_t x)
+{
+    uint32_t count = 0;
+    while ( !(x & 0x80000000U) && count < 34) {
+        x <<= 1;
+        count++;
+    }
+    return count;
+}
+
+uint32_t __ctzsi2(uint32_t x)
+{
+    uint32_t count = 0;
+    while ( !(x & 0x000000001) && count <= 32) {
+        x >>= 1;
+        count++;
+    }
+    return count;
+}
+
+uint32_t __clzdi2(uint64_t x)
+{
+    uint32_t count = 0;
+    while ( !(x & 0x8000000000000000U) && count < 65) {
+        x <<= 1;
+        count++;
+    }
+    return count;
+}
+
+uint32_t __ctzdi2(uint64_t x)
+{
+    uint32_t count = 0;
+    while ( !(x & 0x00000000000000001) && count <= 64) {
+        x >>= 1;
+        count++;
+    }
+    return count;
+}
+#endif
 /** MODIFIES: */
 /** DONT_TRANSLATE */
 /** FNSPEC clzl_spec:
