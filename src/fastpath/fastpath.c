@@ -99,6 +99,12 @@ fastpath_call(word_t cptr, word_t msgInfo)
     stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
 #endif
 
+#ifdef CONFIG_ARCH_RISCV
+    /* Get HW ASID */
+    stored_hw_asid.words[0] = cap_page_directory_cap_get_capPDMappedASID(newVTable);
+#endif
+
+
     /* Ensure the destination has a higher/equal priority to us. */
     if (unlikely(dest->tcbPriority < NODE_STATE(ksCurThread)->tcbPriority)) {
         slowpath(SysCall);
@@ -276,6 +282,10 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_AARCH64
     stored_hw_asid.words[0] = cap_page_global_directory_cap_get_capPGDMappedASID(newVTable);
+#endif
+
+#ifdef CONFIG_ARCH_RISCV
+    stored_hw_asid.words[0] = cap_page_directory_cap_get_capPDMappedASID(newVTable);
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
