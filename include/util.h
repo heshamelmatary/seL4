@@ -19,6 +19,7 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+
 #ifndef __ASSEMBLER__
 
 #define NULL ((void *)0)
@@ -86,7 +87,6 @@ void *memcpy(void* ptr_dst, const void* ptr_src, unsigned long n);
 int PURE strncmp(const char *s1, const char *s2, int n);
 long CONST char_to_long(char c);
 long PURE str_to_long(const char* str);
-
 
 int __builtin_clzl (unsigned long x);
 int __builtin_ctzl (unsigned long x);
