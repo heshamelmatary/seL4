@@ -20,6 +20,13 @@
 #include <arch/types.h>
 #include <plat/machine/devices.h>
 
+
+NODE_STATE_BEGIN(archNodeState)
+/* TODO: add RISCV-dependent fields here */
+/* Bitmask of all cores should receive the reschedule IPI */
+NODE_STATE_DECLARE(word_t, ipiReschedulePending);
+NODE_STATE_END(archNodeState);
+
 extern word_t riscvKSGlobalsFrame[BIT(PAGE_BITS) / sizeof(word_t)] ALIGN_BSS(BIT(PAGE_BITS));
 extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 

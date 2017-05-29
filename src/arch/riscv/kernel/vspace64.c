@@ -594,7 +594,7 @@ void deleteASIDPool(asid_t asid_base, asid_pool_t* pool)
 
     if (riscvKSASIDTable[asid_base >> asidLowBits] == pool) {
         riscvKSASIDTable[asid_base >> asidLowBits] = NULL;
-        setVMRoot(ksCurThread);
+        setVMRoot(NODE_STATE(ksCurThread));
     }
 }
 
@@ -644,7 +644,7 @@ void deleteASID(asid_t asid, pde_t *vspace)
     hwASIDInvalidate(asid);
     if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
         poolPtr->array[asid & MASK(asidLowBits)] = NULL;
-        setVMRoot(ksCurThread);
+        setVMRoot(NODE_STATE(ksCurThread));
     }
 }
 
@@ -871,7 +871,7 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
     asid_t          asid;
 
     if (label == RISCVLVL2PageTableUnmap) {
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageTableInvocationUnmap (cap, cte);
     }
 
@@ -966,7 +966,7 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
     cap = cap_lvl2_page_table_cap_set_capLVL2PTMappedASID(cap, asid);
     cap = cap_lvl2_page_table_cap_set_capLVL2PTMappedAddress(cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageTableInvocationMap(cap, cte, pde, pdSlot);
 
 }
@@ -986,7 +986,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     asid_t          asid;
 
     if (label == RISCVPageTableUnmap) {
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageTableInvocationUnmap (cap, cte);
     }
 
@@ -1081,7 +1081,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
 
-    setThreadState(ksCurThread, ThreadState_Restart);
+    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageTableInvocationMap(cap, cte, pde, pdSlot);
 }
 
@@ -1324,7 +1324,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
                 return map_ret.status;
             }
 
-            setThreadState(ksCurThread, ThreadState_Restart);
+            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
             return performPageInvocationMapPTE(cap, cte,
                                                map_ret.pte,
                                                map_ret.pte_entries);
@@ -1336,7 +1336,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
     }
 
     case RISCVPageUnmap: {
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageInvocationUnmap(cap, cte);
     }
 
@@ -1345,7 +1345,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         /* Check that there are enough message registers */
         assert(n_msgRegisters >= 1);
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageGetAddress((void*)cap_frame_cap_get_capFBasePtr(cap));
     }
 
@@ -1466,7 +1466,7 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
             return status;
         }
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performASIDControlInvocation(frame, destSlot, parentSlot, asid_base);
     }
 
@@ -1526,7 +1526,7 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
 
         asid += i;
 
-        setThreadState(ksCurThread, ThreadState_Restart);
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performASIDPoolInvocation(asid, pool, vspaceCapSlot);
     }
     default:
@@ -1569,8 +1569,8 @@ performPageGetAddress(void *vbase_ptr)
     capFBasePtr = addrFromPPtr(vbase_ptr);
 
     /* return it in the first message register */
-    setRegister(ksCurThread, msgRegisters[0], capFBasePtr);
-    setRegister(ksCurThread, msgInfoRegister,
+    setRegister(NODE_STATE(ksCurThread), msgRegisters[0], capFBasePtr);
+    setRegister(NODE_STATE(ksCurThread), msgInfoRegister,
                 wordFromMessageInfo(seL4_MessageInfo_new(0, 0, 0, 1)));
 
     return EXCEPTION_NONE;

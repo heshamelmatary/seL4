@@ -53,7 +53,7 @@ switchToThread_fp(tcb_t *thread, pde_t *vroot, pde_t stored_hw_asid)
 #error "Unknown IPC buffer strategy"
 #endif
 
-    ksCurThread = thread;
+    NODE_STATE(ksCurThread) = thread;
 }
 
 static inline void
@@ -114,20 +114,15 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
 {
     NODE_UNLOCK_IF_HELD;
 
-    //word_t cur_thread = (word_t) NODE_STATE(ksCurThread);
-
     c_exit_hook();
 
     register word_t badge_reg asm("a0") = badge;
     register word_t msgInfo_reg asm("a1") = msgInfo;
-    register word_t cur_thread_reg asm("a2") = (word_t)ksCurThread->tcbArch.tcbContext.registers;
+    register word_t cur_thread_reg asm("a2") = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
 
 
     asm volatile(
-        "la t0, ksCurThread      \n"
-        "ld t0, 0(t0)    \n"
-        "ld x1, 33*8(t0) \n"
-        "csrw sstatus, x1\n"
+        "mv t0, %[cur_thread]    \n"
         "ld ra, 1*8(t0)  \n"
         "ld sp, 2*8(t0)  \n"
         "ld gp, 3*8(t0)  \n"
@@ -170,11 +165,14 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
         "csrw sscratch, t0\n"
 
+        "ld t1, 33*8(t0) \n"
+        "csrw sstatus, t1\n"
+
         "ld t1, (6*8)(t0) \n"
         "ld t0, (5*8)(t0) \n"
         "sret"
         : /* no output */
-        :
+        : [cur_thread] "r" (cur_thread_reg)
         : "memory"
     );
     UNREACHABLE();
