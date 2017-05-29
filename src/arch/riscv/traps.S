@@ -70,6 +70,9 @@ trap_entry:
   csrr x1, sstatus
   sd x1, (33*REGBYTES)(t0)
 
+  /* disable all "supervisor" interrupts (i.e. timer and IPI) */
+  csrw sstatus, x0
+
   csrr s0, scause
   sd s0, (32*REGBYTES)(t0)
 
@@ -79,8 +82,18 @@ trap_entry:
 
   la gp, __global_pointer$
 
+#if CONFIG_MAX_NUM_NODES > 1
+  li  x4, BIT(CONFIG_KERNEL_STACK_BITS)
+  ld  x2, (35*REGBYTES)(t0)
+  mul x4, x4, x2
+#endif /* ONFIG_MAX_NUM_NODES > 1 */
+
   /* Load kernel's stack address */
   la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
+
+#if CONFIG_MAX_NUM_NODES > 1
+  add sp, sp, x4
+#endif /* ONFIG_MAX_NUM_NODES > 1 */
 
   /* Check if it's an interrupt */
   srli s2, s0, 63

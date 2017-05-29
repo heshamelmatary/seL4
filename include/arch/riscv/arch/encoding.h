@@ -154,7 +154,7 @@
 #define EXT_IO_BASE        0x40000000
 #define DRAM_BASE          0x80000000
 
-// page table entry (PTE) fields
+/* page table entry (PTE) fields */
 #define PTE_V     0x001 // Valid
 #define PTE_R     0x002 // Read
 #define PTE_W     0x004 // Write

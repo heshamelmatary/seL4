@@ -28,22 +28,29 @@ Arch_switchToThread(tcb_t *tcb)
 #error "Unknown IPC buffer strategy"
 #endif
 
-    setRegister(tcb, SSTATUS, SSTATUS_SPIE | SSTATUS_SIE | SSTATUS_UIE | SSTATUS_UPIE);
 }
 
 BOOT_CODE void
-Arch_configureIdleThread(tcb_t *tcb)
+Arch_configureIdleThread(tcb_t *tcb, int affinity)
 {
     setRegister(tcb, SEPC, (word_t)idleThreadStart);
 
     /* Enable interrupts and keep working in supervisor mode */
     setRegister(tcb, SSTATUS, (word_t) SSTATUS_SPP | SSTATUS_SPIE | SSTATUS_SIE);
+    setRegister(tcb, HARTID, affinity);
 }
 
 void
 Arch_switchToIdleThread(void)
 {
+    tcb_t *tcb = NODE_STATE(ksIdleThread);
+
+    /* Force the idle thread to run on kernel page table */
+    setVMRoot(tcb);
+
+#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
     *riscvKSGlobalsFrame = 0;
+#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 }
 
 void CONST

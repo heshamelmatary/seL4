@@ -31,6 +31,9 @@ Arch_performTransfer(word_t arch, tcb_t *tcb_src, tcb_t *tcb_dest)
 void
 Arch_migrateTCB(tcb_t *thread)
 {
+    word_t hart_mask = BIT(thread->tcbAffinity);
+
+    setRegister(thread, HARTID, thread->tcbAffinity);
 }
 #endif /* CONFIG_MAX_NUM_NODES > 1 */
 

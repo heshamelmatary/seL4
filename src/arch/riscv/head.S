@@ -24,7 +24,15 @@
 _start:
   la gp, __global_pointer$
 
-  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
+  /* hartid is in a4 */
+  li  sp, BIT(CONFIG_KERNEL_STACK_BITS)
+  mul sp, sp, a4
+  la  x1, (kernel_stack_alloc + (BIT(CONFIG_KERNEL_STACK_BITS)))
+  add sp, sp, x1
+
+  csrrw x0, sscratch, a4 /* zero sscratch for the init task */
+
+  /* la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS)) */
   jal init_kernel
   
   la ra, restore_user_context

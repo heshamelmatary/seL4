@@ -87,7 +87,7 @@ isHighestPrio(word_t dom, prio_t prio)
            prio >= getHighestPrio(dom);
 }
 
-void configureIdleThread(tcb_t *tcb);
+void configureIdleThread(tcb_t *tcb, int affinity);
 void activateThread(void);
 void suspend(tcb_t *target);
 void restart(tcb_t *target);
