@@ -79,9 +79,16 @@ void
 maskInterrupt(bool_t disable, interrupt_t irq)
 {
     if (disable) {
-        clear_csr(sie, irq);
+        if (irq > 1) {
+            clear_csr(sie, BIT(irq));
+        }
     } else {
-        set_csr(sie, irq);
+        /* FIXME: currently only account for user/supervisor and timer interrupts */
+        if (irq == 4 /* user timer */ || irq == 5 /* supervisor timer */) {
+            set_csr(sie, BIT(irq));
+        } else {
+            /* TODO: account for external and PLIC interrupts */
+        }
     }
 }
 
@@ -103,7 +110,12 @@ handleReservedIRQ(irq_t irq)
 void
 ackInterrupt(irq_t irq)
 {
-    clear_csr(sip, irq);
+    clear_csr(sip, BIT(irq));
+    //set_csr(scause, 0);
+
+    if (irq == 1) {
+        sbi_clear_ipi();
+    }
 }
 
 static unsigned long timebase;

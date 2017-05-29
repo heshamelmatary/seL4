@@ -377,12 +377,14 @@ remoteTCBStall(tcb_t *tcb)
 static exception_t
 invokeTCB_SetAffinity(tcb_t *thread, word_t affinity)
 {
-    Arch_migrateTCB(thread);
 
     /* remove the tcb from scheduler queue in case it is already in one
      * and add it to new queue if required */
     tcbSchedDequeue(thread);
     thread->tcbAffinity = affinity;
+
+    Arch_migrateTCB(thread);
+
     if (isRunnable(thread)) {
         SCHED_APPEND(thread);
     }

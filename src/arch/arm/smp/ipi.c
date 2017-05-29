@@ -11,7 +11,7 @@
  */
 
 #include <config.h>
-#include <arch/smp/ipi.h>
+#include <mode/smp/ipi.h>
 #include <smp/lock.h>
 
 #if CONFIG_MAX_NUM_NODES > 1

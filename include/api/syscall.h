@@ -16,6 +16,7 @@
 #include <model/statedata.h>
 #include <kernel/vspace.h>
 #include <arch/api/syscall.h>
+#include <arch/machine.h>
 #include <api/debug.h>
 
 exception_t handleSyscall(syscall_t syscall);

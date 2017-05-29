@@ -55,7 +55,7 @@ isRunnable(const tcb_t *thread)
     }
 }
 
-void configureIdleThread(tcb_t *tcb);
+void configureIdleThread(tcb_t *tcb, int affinity);
 void activateThread(void);
 void suspend(tcb_t *target);
 void restart(tcb_t *target);

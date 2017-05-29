@@ -8,6 +8,26 @@
 #include <arch/encoding.h>
 #include <arch/machine/cpu_registers.h>
 #include <arch/model/statedata.h>
+#include <arch/model/smp.h>
+#include <arch/sbi.h>
+
+#if CONFIG_MAX_NUM_NODES > 1
+/* Use the first two SGI (Software Generated Interrupt) IDs
+ * for seL4 IPI implementation. SGIs are per-core banked.
+ */
+#define irq_remote_call_ipi        0
+#define irq_reschedule_ipi         1
+#define int_remote_call_ipi       irq_remote_call_ipi
+#define int_reschedule_ipi        irq_reschedule_ipi
+
+#define IPI_MEM_BARRIER asm volatile("sfence.vma");
+
+void ipi_send_target(irq_t irq, word_t cpuTargetList)
+{
+    sbi_send_ipi(&cpuTargetList);
+}
+
+#endif /* CONFIG_MAX_NUM_NODES > 1 */
 
 word_t PURE getRestartPC(tcb_t *thread);
 void setNextPC(tcb_t *thread, word_t v);

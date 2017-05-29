@@ -10,17 +10,11 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_SMP_IPI_H
-#define __ARCH_SMP_IPI_H
+#ifndef __ARCH_MODEL_SMP_H_
+#define __ARCH_MODEL_SMP_H_
 
 #include <config.h>
+#include <mode/smp/smp.h>
+#include <model/smp.h>
 
-#if CONFIG_MAX_NUM_NODES > 1
-typedef enum {
-    IpiRemoteCall_Stall,
-    /* Add relevant calls here upon required */
-    IpiNumArchRemoteCall
-} IpiRemoteCall_t;
-
-#endif /* CONFIG_MAX_NUM_NODES > 1 */
-#endif /* __ARCH_SMP_IPI_H */
+#endif /* __ARCH_MODEL_SMP_H_ */

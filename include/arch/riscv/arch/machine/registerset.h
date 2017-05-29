@@ -14,11 +14,7 @@
 #define __ARCH_MACHINE_REGISTERSET_H
 
 #include "hardware.h"
-
-#define PT_SP               (2  * 8)
-#define PT_A0               (10 * 8)
-
-#define SSTATUS_FS 0x00006000
+#include <arch/encoding.h>
 
 #ifndef __ASSEMBLER__
 
@@ -70,6 +66,7 @@ enum _register {
     SCAUSE,
     SSTATUS,
     SEPC,
+    HARTID,
 
     /* TODO: add other user-level CSRs if needed (i.e. to avoid channels) */
 
@@ -102,7 +99,7 @@ static inline void Arch_initContext(user_context_t* context)
     /* Enable floating point for new threads (discarded if HW doesn't support it)
      * otherwise, a FP exception will be triggered
      */
-    context->registers[SSTATUS] = SSTATUS_FS;
+    context->registers[SSTATUS] = SSTATUS_FS | SSTATUS_SPIE | SSTATUS_SIE;
 }
 
 static inline word_t CONST

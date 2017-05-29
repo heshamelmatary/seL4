@@ -34,6 +34,8 @@
 #define SV39_GET_LVL2_PT_INDEX(addr) (((addr) >> 21) & MASK(SV39_LVL2_PT_BITS))
 #define SV39_GET_LVL3_PT_INDEX(addr) (((addr) >> 12) & MASK(SV39_LVL2_PT_BITS))
 
+#define L1_CACHE_LINE_SIZE 64
+
 #ifndef __ASSEMBLER__
 
 #include <arch/types.h>
