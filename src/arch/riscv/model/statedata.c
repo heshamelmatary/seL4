@@ -27,3 +27,9 @@ asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 pde_t l1pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] __attribute__ ((aligned(BIT(RISCV_4K_PageBits))));
 pte_t l2pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] __attribute__ ((aligned(BIT(RISCV_4K_PageBits))));
 pte_t l3pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] __attribute__ ((aligned(BIT(RISCV_4K_PageBits))));
+/*
+ * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2015-2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Author: Hesham Almatary <heshamelmatary@gmail.com>
+ */
+

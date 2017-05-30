@@ -25,3 +25,9 @@ exception_t ioapic_decode_map_pin_to_vector(word_t ioapic, word_t pin, word_t le
  * any checks, use ioapic_decode_map_pin_to_vector first */
 void ioapic_map_pin_to_vector(word_t ioapic, word_t pin, word_t level, word_t polarity, word_t vector);
 #endif
+/*
+ * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2015-2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Author: Hesham Almatary <heshamelmatary@gmail.com>
+ */
+

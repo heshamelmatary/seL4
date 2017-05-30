@@ -71,3 +71,9 @@ typedef enum _irq_t {
 #define BIOS_PADDR_IVDEO_RAM_END 0x000C0000
 
 #endif
+/*
+ * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2015-2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Author: Hesham Almatary <heshamelmatary@gmail.com>
+ */
+

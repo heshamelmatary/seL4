@@ -70,3 +70,9 @@ static inline void plat_cleanInvalidateL2Range(paddr_t start, paddr_t end) {}
 static inline void plat_cleanInvalidateCache(void) {}
 
 #endif /* !__PLAT_MACHINE_HARDWARE_H */
+/*
+ * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2015-2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Author: Hesham Almatary <heshamelmatary@gmail.com>
+ */
+

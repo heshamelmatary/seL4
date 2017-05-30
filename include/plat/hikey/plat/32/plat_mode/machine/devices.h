@@ -20,3 +20,9 @@
 #define ARM_DEBUG_MMAPPING_PPTR     0xfff05000
 
 #endif /* __PLAT_MODE_MACHINE_DEVICES_H */
+/*
+ * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2015-2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Author: Hesham Almatary <heshamelmatary@gmail.com>
+ */
+

@@ -72,3 +72,9 @@ struct imx31_l2cc_lockdown {
     ((volatile struct imx31_l2cc_lockdown *)(L2CC_PPTR + 0x900))
 
 #endif
+/*
+ * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2015-2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Author: Hesham Almatary <heshamelmatary@gmail.com>
+ */
+
