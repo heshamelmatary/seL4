@@ -39,4 +39,7 @@ typedef node_id_t seL4_NodeId;
 typedef paddr_t seL4_PAddr;
 typedef dom_t seL4_Domain;
 
+#define wordRadix 6
+#define wordBits (1 << wordRadix)
+
 #endif
