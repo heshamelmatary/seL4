@@ -164,4 +164,13 @@ block pde {
     field valid               1
 }
 
+block pte_type {
+    padding         32
+    padding         28
+    field user      1
+    field execute   1
+    field write     1
+    field read      1
+}
+
 #include <arch/api/shared_types.bf>
