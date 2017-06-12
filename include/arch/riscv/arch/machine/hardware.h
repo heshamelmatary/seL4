@@ -61,23 +61,6 @@ enum vm_page_size {
     RISCV_1G_Page
 };
 
-enum pte_type {
-    RISCV_PTE_TYPE_TABLE = 0,
-    RISCV_PTE_TYPE_TABLE_GLOBAL = 0x10,
-    RISCV_PTE_TYPE_UR_SR = 0x9,
-    RISCV_PTE_TYPE_URW_SRW = 0xB,
-    RISCV_PTE_TYPE_URX_SRX = 0xD,
-    RISCV_PTE_TYPE_URWX_SRWX = 0xF,
-    RISCV_PTE_TYPE_SR = 0x1,
-    RISCV_PTE_TYPE_SRW = 0x3,
-    RISCV_PTE_TYPE_SRX = 0x5,
-    RISCV_PTE_TYPE_SRWX = 0x7,
-    RISCV_PTE_TYPE_SR_GLOBAL = 0x11,
-    RISCV_PTE_TYPE_SRW_GLOBAL = 0x13,
-    RISCV_PTE_TYPE_SRX_GLOBAL = 0x15,
-    RISCV_PTE_TYPE_SRWX_GLOBAL = 0x17
-};
-
 typedef uint32_t vm_page_size_t;
 
 enum PageSizeConstants {
