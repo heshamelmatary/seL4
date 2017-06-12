@@ -50,13 +50,25 @@ APFromVMRights(vm_rights_t vm_rights)
         return 0;
 
     case VMKernelOnly:
-        return RISCV_PTE_TYPE_SRWX;
+        return pte_type_new(0, /* user */
+                            1, /* execute */
+                            1, /* write */
+                            1  /* read */
+                           ).words[0];
 
     case VMReadOnly:
-        return RISCV_PTE_TYPE_URX_SRX;
+        return pte_type_new(1, /* user */
+                            1, /* execute */
+                            0, /* write */
+                            1  /* read */
+                           ).words[0];
 
     case VMReadWrite:
-        return RISCV_PTE_TYPE_URWX_SRWX;
+        return pte_type_new(1, /* user */
+                            1, /* execute */
+                            1, /* write */
+                            1  /* read */
+                           ).words[0];
 
     default:
         fail("Invalid VM rights");
@@ -100,7 +112,7 @@ map_kernel_window(uint64_t sbi_pt)
                                                     1,  /* dirty */
                                                     1,  /* read */
                                                     1,  /* global */
-                                                    RISCV_PTE_TYPE_TABLE,
+                                                    pte_type_new(0, 0, 0, 0).words[0],
                                                     1 /* valid */
                                                 );
 
@@ -113,7 +125,7 @@ map_kernel_window(uint64_t sbi_pt)
                              1,  /* dirty */
                              1,  /* read */
                              1,  /* global */
-                             RISCV_PTE_TYPE_SRWX,
+                             pte_type_new(0, 1, 1, 1).words[0],
                              1 /* valid */
                          );
     }
@@ -127,7 +139,7 @@ map_kernel_window(uint64_t sbi_pt)
                      1,  /* dirty */
                      1,  /* read */
                      1,  /* global */
-                     RISCV_PTE_TYPE_TABLE,
+                     pte_type_new(0, 0, 0, 0).words[0],
                      1 /* valid */
                  );
 
@@ -169,7 +181,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
                       1, /* dirty */
                       1, /* read */
                       0,  /* global */
-                      RISCV_PTE_TYPE_TABLE, /* type */
+                      pte_type_new(0, 0, 0, 0).words[0], /* type */
                       1 /* valid */
                   );
     asm volatile ("sfence.vma");
@@ -191,7 +203,7 @@ map_it_lvl2_pt_cap(cap_t vspace_cap, cap_t pt_cap)
                       1, /* dirty */
                       1, /* read */
                       0,  /* global */
-                      RISCV_PTE_TYPE_TABLE, /* type */
+                      pte_type_new(0, 0, 0, 0).words[0], /* type */
                       1 /* valid */
                   );
     asm volatile ("sfence.vma");
@@ -946,7 +958,7 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
               1, /* dirty */
               1, /* read */
               0,  /* global */
-              RISCV_PTE_TYPE_TABLE, /* type */
+              pte_type_new(0, 0, 0, 0).words[0], /* type */
               1 /* valid */
           );
 
@@ -1061,7 +1073,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
               1, /* dirty */
               1, /* read */
               0,  /* global */
-              RISCV_PTE_TYPE_TABLE, /* type */
+              pte_type_new(0, 0, 0, 0).words[0], /* type */
               1 /* valid */
           );
 
