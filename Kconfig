@@ -326,6 +326,7 @@ menu "seL4 System"
         help
             Support for TK1 SoC-specific SystemMMU
 
+source "$KERNEL_PATH/src/arch/riscv/Kconfig"
 source "$KERNEL_PATH/src/arch/arm/Kconfig"
 source "$KERNEL_PATH/src/plat/pc99/Kconfig"
 
