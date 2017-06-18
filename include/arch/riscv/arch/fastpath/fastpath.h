@@ -44,7 +44,14 @@ switchToThread_fp(tcb_t *thread, pde_t *vroot, pde_t stored_hw_asid)
     asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
 
     riscv_vm_contextSwitch(vroot, asid);
+
+#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
     *riscvKSGlobalsFrame = thread->tcbIPCBuffer;
+#elif defined(CONFIG_IPC_BUF_IN_RISCV_TP_REGISTER)
+    setRegister(thread, tp, thread->tcbIPCBuffer);
+#else
+#error "Unknown IPC buffer strategy"
+#endif
 
     ksCurThread = thread;
 }

@@ -20,7 +20,15 @@ Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
 
+#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
     *riscvKSGlobalsFrame = tcb->tcbIPCBuffer;
+#elif defined(CONFIG_IPC_BUF_IN_RISCV_TP_REGISTER)
+    setRegister(tcb, tp, tcb->tcbIPCBuffer);
+#else
+#error "Unknown IPC buffer strategy"
+#endif
+
+    setRegister(tcb, SSTATUS, SSTATUS_SPIE | SSTATUS_SIE | SSTATUS_UIE | SSTATUS_UPIE);
 }
 
 BOOT_CODE void
