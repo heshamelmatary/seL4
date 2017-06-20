@@ -1,4 +1,10 @@
 --
+-- Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+-- Copyright 2015-2016 Hesham Almatary <heshamelmatary@gmail.com>
+-- Author: Hesham Almatary <heshamelmatary@gmail.com>
+--
+
+--
 -- Copyright 2016, Data61
 -- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
 -- ABN 41 687 119 230

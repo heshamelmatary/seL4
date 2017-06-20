@@ -1,4 +1,10 @@
 /*
+ * Copyright 2016, 2017 Hesham Almatary, Data61/CSIRO <hesham.almatary@data61.csiro.au>
+ * Copyright 2015-2016 Hesham Almatary <heshamelmatary@gmail.com>
+ * Author: Hesham Almatary <heshamelmatary@gmail.com>
+ */
+
+/*
  * Copyright 2014, General Dynamics C4 Systems
  *
  * This software may be distributed and modified according to the terms of
@@ -138,11 +144,7 @@ static inline int read_current_timer(unsigned long *timer_val)
 void
 resetTimer(void)
 {
-    /* Timer resets automatically */
-    //sbi_set_timer(get_cycles() + (0xfffff / 10));
-    //uint32_t timer_val = read_csr(stime);
-    /* 10ms? */
-    //write_csr(stimecmp, timer_val + TIMER_TICK_NS);
+    sbi_set_timer(get_cycles() + (0xfffff / 10));
 }
 
 /**
@@ -151,17 +153,7 @@ resetTimer(void)
 BOOT_CODE void
 initTimer(void)
 {
-    //timebase = sbi_timebase();
-    timebase = 0;
-
-    //printf("%d\n", get_cycles());
-    //sbi_set_timer(get_cycles() + 0xfffff);
-    //sbi_set_timer(csr_read(stime) + 0xffffff);
-    /* 10ms? */
-    //write_csr(stimecmp, timer_val + TIMER_TICK_NS);
-
-    /* Enable timer interrupt */
-    //set_csr(sie, 0x20);
+    sbi_set_timer(get_cycles() + 0xfffff);
 }
 
 static void invalidateL2(void)
@@ -198,7 +190,6 @@ BOOT_CODE void
 initIRQController(void)
 {
     /* Do nothing */
-    printf("Init IRQ!! \n");
 }
 
 void
@@ -207,4 +198,3 @@ handleSpuriousIRQ(void)
     /* Do nothing */
     printf("Superior IRQ!! \n");
 }
-
