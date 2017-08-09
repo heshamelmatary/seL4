@@ -322,7 +322,8 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
     copyGlobalMappings(PDE_PTR(pd_pptr));
 
     pd_cap =
-        cap_page_directory_cap_new(
+        cap_page_table_cap_new(
+            1,                  /* capLevel           */
             IT_ASID,            /* capPDMappedASID    */
             (word_t) pd_pptr,   /* capPDBasePtr       */
             1,                  /* capPDIsMapped      */
@@ -423,19 +424,19 @@ findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 
 bool_t CONST isVTableRoot(cap_t cap)
 {
-    return cap_get_capType(cap) == cap_page_directory_cap;
+    return (cap_get_capType(cap) == cap_page_table_cap) && (cap_page_table_cap_get_capLevel(cap) == 1);
 }
 
 bool_t CONST isValidNativeRoot(cap_t cap)
 {
     return isVTableRoot(cap) &&
-           cap_page_directory_cap_get_capPDIsMapped(cap);
+           cap_page_table_cap_get_capPTIsMapped(cap);
 }
 
 pte_t *getValidNativeRoot(cap_t vspace_cap)
 {
     if (isValidNativeRoot(vspace_cap)) {
-        return PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vspace_cap));
+        return PDE_PTR(cap_page_table_cap_get_capPTBasePtr(vspace_cap));
     }
     return NULL;
 }
@@ -612,10 +613,11 @@ exception_t performASIDControlInvocation(void* frame, cte_t* slot, cte_t* parent
 exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* vspaceCapSlot)
 {
     cap_t cap = vspaceCapSlot->cap;
-    cap = cap_page_directory_cap_set_capPDMappedASID(cap, asid);
-    cap = cap_page_directory_cap_set_capPDIsMapped(cap, 1);
+    cap = cap_page_table_cap_set_capLevel(cap, 1);
+    cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
+    cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     vspaceCapSlot->cap = cap;
-    poolPtr->array[asid & MASK(asidLowBits)] = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vspaceCapSlot->cap));
+    poolPtr->array[asid & MASK(asidLowBits)] = PDE_PTR(cap_page_table_cap_get_capPTBasePtr(vspaceCapSlot->cap));
 
     return EXCEPTION_NONE;
 }
@@ -749,14 +751,15 @@ setVMRoot(tcb_t *tcb)
 
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
-    if (cap_get_capType(threadRoot) != cap_page_directory_cap) {
+    if (cap_get_capType(threadRoot) != cap_page_table_cap ||
+            cap_page_table_cap_get_capLevel(threadRoot) != 1 ) {
         setCurrentPD(addrFromPPtr(l1pt), 0);
         return;
     }
 
-    pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(threadRoot));
+    pd = PDE_PTR(cap_page_table_cap_get_capPTBasePtr(threadRoot));
 
-    asid = cap_page_directory_cap_get_capPDMappedASID(threadRoot);
+    asid = cap_page_table_cap_get_capPTMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != pd)) {
         setCurrentPD(addrFromPPtr(l1pt), asid);
@@ -769,7 +772,7 @@ setVMRoot(tcb_t *tcb)
 bool_t CONST
 isValidVTableRoot(cap_t cap)
 {
-    return cap_get_capType(cap) == cap_page_directory_cap;
+    return (cap_get_capType(cap) == cap_page_table_cap) && (cap_page_table_cap_get_capLevel(cap) == 1);
 }
 
 exception_t
@@ -886,15 +889,22 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap)) {
+    if (unlikely(cap_get_capType(pdCap) != cap_page_table_cap)) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCap));
-    asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
+    if (unlikely(cap_page_table_cap_get_capLevel(pdCap) != 1 )) {
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    pd = PDE_PTR(cap_page_table_cap_get_capPTBasePtr(pdCap));
+    asid = cap_page_table_cap_get_capPTMappedASID(pdCap);
 
     if (unlikely(vaddr >= kernelBase)) {
         current_syscall_error.type = seL4_InvalidArgument;
@@ -1001,15 +1011,22 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap)) {
+    if (unlikely(cap_get_capType(pdCap) != cap_page_table_cap)) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(pdCap));
-    asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
+    if (unlikely(cap_page_table_cap_get_capLevel(pdCap) != 1)) {
+        current_syscall_error.type = seL4_InvalidCapability;
+        current_syscall_error.invalidCapNumber = 1;
+
+        return EXCEPTION_SYSCALL_ERROR;
+    }
+
+    pd = PDE_PTR(cap_page_table_cap_get_capPTBasePtr(pdCap));
+    asid = cap_page_table_cap_get_capPTMappedASID(pdCap);
 
     if (unlikely(vaddr >= kernelBase)) {
         current_syscall_error.type = seL4_InvalidArgument;
@@ -1204,7 +1221,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
 
         }
 
-        if (unlikely(cap_get_capType(pdCap) != cap_page_directory_cap)) {
+        if (unlikely(cap_get_capType(pdCap) != cap_page_table_cap)) {
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -1212,7 +1229,15 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        pd = PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(
+        if (unlikely(cap_page_table_cap_get_capLevel(pdCap) != 1)) {
+            current_syscall_error.type =
+                seL4_InvalidCapability;
+            current_syscall_error.invalidCapNumber = 1;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        pd = PDE_PTR(cap_page_table_cap_get_capPTBasePtr(
                          pdCap));
 
         lookupPTSlot_ret_t lu_ret;
@@ -1254,7 +1279,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             }
         }
 
-        asid = cap_page_directory_cap_get_capPDMappedASID(pdCap);
+        asid = cap_page_table_cap_get_capPTMappedASID(pdCap);
 
         {
             findVSpaceForASID_ret_t find_ret;
@@ -1372,17 +1397,19 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                          word_t *buffer)
 {
+    uint8_t pt_level = cap_page_table_cap_get_capLevel(cap);
+
     switch (cap_get_capType(cap)) {
 
-    case cap_page_directory_cap:
-        return decodeRISCVPageDirectoryInvocation(label, length, cte, cap, extraCaps, buffer);
-
     case cap_page_table_cap:
-        if (cap_page_table_cap_get_capLevel(cap) == 2) {
+        switch (pt_level) {
+        case 1:
+            return decodeRISCVPageDirectoryInvocation(label, length, cte, cap, extraCaps, buffer);
+        case 2:
             return decodeRISCVLVL2PageTableInvocation(label, length, cte, cap, extraCaps, buffer);
-        } else if (cap_page_table_cap_get_capLevel(cap) == 3) {
+        case 3:
             return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer);
-        } else {
+        default:
             fail("Invalid page table level\n");
         }
 
@@ -1486,7 +1513,7 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
         vspaceCap = vspaceCapSlot->cap;
 
         if (!isVTableRoot(vspaceCap) ||
-                cap_page_directory_cap_get_capPDMappedASID(vspaceCap) != asidInvalid) {
+                cap_page_table_cap_get_capPTMappedASID(vspaceCap) != asidInvalid) {
             userError("RISCVASIDPool: Invalid vspace root.");
             current_syscall_error.type = seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;

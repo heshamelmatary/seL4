@@ -35,7 +35,6 @@ cap_get_capSpaceType(cap_t cap)
     case cap_thread_cap:
     case cap_frame_cap:
     case cap_page_table_cap:
-    case cap_page_directory_cap:
     case cap_zombie_cap:
         return capSpaceTypedMemory;
 
@@ -73,7 +72,6 @@ cap_get_capSpacePtr(cap_t cap)
     case cap_thread_cap:
     case cap_frame_cap:
     case cap_page_table_cap:
-    case cap_page_directory_cap:
     case cap_zombie_cap:
     case cap_untyped_cap:
         return cap_get_capPtr(cap);
@@ -109,7 +107,6 @@ cap_get_capSpaceSize(cap_t cap)
     case cap_thread_cap:
     case cap_frame_cap:
     case cap_page_table_cap:
-    case cap_page_directory_cap:
     case cap_zombie_cap:
     case cap_untyped_cap:
         return BIT(cap_get_capSizeBits(cap));

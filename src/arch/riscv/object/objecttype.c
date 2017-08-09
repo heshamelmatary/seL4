@@ -26,11 +26,6 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
-    case cap_page_directory_cap:
-        ret.cap = cap;
-        ret.status = EXCEPTION_NONE;
-        return ret;
-
     case cap_frame_cap:
         cap = cap_frame_cap_set_capFMappedAddress(cap, 0);
         ret.cap = cap_frame_cap_set_capFMappedASID(cap, asidInvalid);
@@ -67,12 +62,6 @@ cap_t
 Arch_finaliseCap(cap_t cap, bool_t final)
 {
     switch (cap_get_capType(cap)) {
-    case cap_page_directory_cap:
-        if (final && cap_page_directory_cap_get_capPDIsMapped(cap)) {
-            deleteASID(cap_page_directory_cap_get_capPDMappedASID(cap),
-                       PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(cap)));
-        }
-        break;
     case cap_frame_cap:
         if (final) {
             unmapPage(cap_frame_cap_get_capFSize(cap),
@@ -82,7 +71,11 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
     case cap_page_table_cap:
-        if (final && cap_page_table_cap_get_capPTIsMapped(cap)) {
+        if (final && (cap_page_table_cap_get_capLevel(cap) == 1)) {
+            deleteASID(cap_page_table_cap_get_capPTMappedASID(cap),
+                       PDE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
+
+        } else if (final && cap_page_table_cap_get_capPTIsMapped(cap)) {
             unmapPageTable(
                 cap_page_table_cap_get_capPTMappedASID(cap),
                 cap_page_table_cap_get_capPTMappedAddress(cap),
@@ -103,9 +96,6 @@ resetMemMapping(cap_t cap)
     case cap_page_table_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_page_table_cap_set_capPTIsMapped(cap, 0);
-    case cap_page_directory_cap:
-        /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
-        return cap_page_directory_cap_set_capPDIsMapped(cap, 0);
     }
     return cap;
 }
@@ -160,13 +150,6 @@ Arch_sameRegionAs(cap_t cap_a, cap_t cap_b)
         if (cap_get_capType(cap_b) == cap_page_table_cap) {
             return cap_page_table_cap_get_capPTBasePtr(cap_a) ==
                    cap_page_table_cap_get_capPTBasePtr(cap_b);
-        }
-        break;
-
-    case cap_page_directory_cap:
-        if (cap_get_capType(cap_b) == cap_page_directory_cap) {
-            return cap_page_directory_cap_get_capPDBasePtr(cap_a) ==
-                   cap_page_directory_cap_get_capPDBasePtr(cap_b);
         }
         break;
     }
@@ -284,7 +267,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
         memzero(regionBase, 1 << RISCV_4K_PageBits);
         copyGlobalMappings((pte_t *)regionBase);
 
-        return cap_page_directory_cap_new(
+        return cap_page_table_cap_new(
+                   1,                          /* capLevel    */
                    asidInvalid,                /* capPDMappedASID      */
                    (word_t)regionBase,         /* capPDBasePtr         */
                    0,                          /* capPDIsMapped        */
@@ -314,7 +298,6 @@ Arch_decodeInvocation(
 )
 {
     switch (cap_get_capType(cap)) {
-    case cap_page_directory_cap:
     case cap_page_table_cap:
     case cap_frame_cap:
     case cap_asid_control_cap:

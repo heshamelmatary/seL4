@@ -123,9 +123,6 @@ cap_get_archCapIsPhysical(cap_t cap)
     case cap_page_table_cap:
         return true;
 
-    case cap_page_directory_cap:
-        return true;
-
     case cap_asid_control_cap:
         return false;
 
@@ -170,9 +167,6 @@ cap_get_archCapSizeBits(cap_t cap)
     case cap_page_table_cap:
         return PT_SIZE_BITS;
 
-    case cap_page_directory_cap:
-        return PD_SIZE_BITS;
-
     case cap_asid_control_cap:
         return 0;
 
@@ -200,9 +194,6 @@ cap_get_archCapPtr(cap_t cap)
 
     case cap_page_table_cap:
         return PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap));
-
-    case cap_page_directory_cap:
-        return PD_PTR(cap_page_directory_cap_get_capPDBasePtr(cap));
 
     case cap_asid_control_cap:
         return NULL;

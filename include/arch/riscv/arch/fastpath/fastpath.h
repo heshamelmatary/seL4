@@ -36,7 +36,7 @@ compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 
 /* Use macros to not break verification */
 #define endpoint_ptr_get_epQueue_tail_fp(ep_ptr) TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr))
-#define cap_vtable_cap_get_vspace_root_fp(vtable_cap) PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vtable_cap))
+#define cap_vtable_cap_get_vspace_root_fp(vtable_cap) PDE_PTR(cap_page_table_cap_get_capPTBasePtr(vtable_cap))
 
 static inline void FORCE_INLINE
 switchToThread_fp(tcb_t *thread, pte_t *vroot, pte_t stored_hw_asid)
@@ -71,7 +71,9 @@ mdb_node_ptr_set_mdbPrev_np(mdb_node_t *node_ptr, word_t mdbPrev)
 static inline bool_t
 isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
-    return cap_capType_equals(vspace_root_cap, cap_page_directory_cap) && cap_page_directory_cap_get_capPDIsMapped(vspace_root_cap);
+    return cap_capType_equals(vspace_root_cap, cap_page_table_cap) &&
+           cap_page_table_cap_get_capPTIsMapped(vspace_root_cap) &&
+           (cap_page_table_cap_get_capLevel(vspace_root_cap) == 1);
 }
 
 /* This is an accelerated check that msgLength, which appears
