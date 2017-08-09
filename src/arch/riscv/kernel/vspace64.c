@@ -179,8 +179,8 @@ BOOT_CODE void
 map_it_lvl2_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 {
     pte_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
-    pte_t* pt   = PTE_PTR(cap_lvl2_page_table_cap_get_capLVL2PTBasePtr(pt_cap));
-    vptr_t vptr = cap_lvl2_page_table_cap_get_capLVL2PTMappedAddress(pt_cap);
+    pte_t* pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
+    vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
     uint32_t pdIndex = SV39_GET_LVL1_PT_INDEX(vptr);
 
     pte_t* targetSlot = pd + pdIndex;
@@ -273,6 +273,7 @@ create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
     cap = cap_page_table_cap_new(
+              3,      /* capLevel             */
               asid,   /* capPTMappedASID      */
               pptr,   /* capPTBasePtr         */
               1,      /* capPTIsMapped        */
@@ -287,7 +288,8 @@ static BOOT_CODE cap_t
 create_it_lvl2_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid)
 {
     cap_t cap;
-    cap = cap_lvl2_page_table_cap_new(
+    cap = cap_page_table_cap_new(
+              2,      /* capLevel      */
               asid,   /* capLVL2PTMappedASID      */
               pptr,   /* capLVL2PTBasePtr         */
               1,      /* capLVL2PTIsMapped        */
@@ -938,7 +940,7 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
     }
 
     paddr = addrFromPPtr(
-                PTE_PTR(cap_lvl2_page_table_cap_get_capLVL2PTBasePtr(cap)));
+                PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
 
     pde = pte_new(
               (paddr >> RISCV_4K_PageBits),
@@ -950,9 +952,9 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
               1 /* valid */
           );
 
-    cap = cap_lvl2_page_table_cap_set_capLVL2PTIsMapped(cap, 1);
-    cap = cap_lvl2_page_table_cap_set_capLVL2PTMappedASID(cap, asid);
-    cap = cap_lvl2_page_table_cap_set_capLVL2PTMappedAddress(cap, vaddr);
+    cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
+    cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
+    cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
 
     setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
     return performPageTableInvocationMap(cap, cte, pde, pdSlot);
@@ -1065,6 +1067,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
               1 /* valid */
           );
 
+    cap = cap_page_table_cap_set_capLevel(cap, 3);
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
@@ -1374,11 +1377,14 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
     case cap_page_directory_cap:
         return decodeRISCVPageDirectoryInvocation(label, length, cte, cap, extraCaps, buffer);
 
-    case cap_lvl2_page_table_cap:
-        return decodeRISCVLVL2PageTableInvocation(label, length, cte, cap, extraCaps, buffer);
-
     case cap_page_table_cap:
-        return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer);
+        if (cap_page_table_cap_get_capLevel(cap) == 2) {
+            return decodeRISCVLVL2PageTableInvocation(label, length, cte, cap, extraCaps, buffer);
+        } else if (cap_page_table_cap_get_capLevel(cap) == 3) {
+            return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer);
+        } else {
+            fail("Invalid page table level\n");
+        }
 
     case cap_frame_cap:
         return decodeRISCVFrameInvocation(label, length, cte, cap, extraCaps, buffer);

@@ -26,11 +26,6 @@ Arch_deriveCap(cte_t *slot, cap_t cap)
         ret.status = EXCEPTION_NONE;
         return ret;
 
-    case cap_lvl2_page_table_cap:
-        ret.cap = cap;
-        ret.status = EXCEPTION_NONE;
-        return ret;
-
     case cap_page_directory_cap:
         ret.cap = cap;
         ret.status = EXCEPTION_NONE;
@@ -108,9 +103,6 @@ resetMemMapping(cap_t cap)
     case cap_page_table_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_page_table_cap_set_capPTIsMapped(cap, 0);
-    case cap_lvl2_page_table_cap:
-        /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
-        return cap_lvl2_page_table_cap_set_capLVL2PTIsMapped(cap, 0);
     case cap_page_directory_cap:
         /* We don't need to worry about clearing ASID and Address here, only whether it is mapped */
         return cap_page_directory_cap_set_capPDIsMapped(cap, 0);
@@ -270,6 +262,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
         memzero(regionBase, 1 << RISCV_4K_PageBits);
 
         return cap_page_table_cap_new(
+                   3,                      /* capLevel    */
                    asidInvalid,            /* capPTMappedASID    */
                    (word_t)regionBase,     /* capPTBasePtr       */
                    0,                      /* capPTIsMapped      */
@@ -279,7 +272,8 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
     case seL4_RISCV_LVL2PageTableObject:
         memzero(regionBase, 1 << RISCV_4K_PageBits);
 
-        return cap_lvl2_page_table_cap_new(
+        return cap_page_table_cap_new(
+                   2,                      /* capLevel    */
                    asidInvalid,            /* capLVL2PTMappedASID    */
                    (word_t)regionBase,     /* capLVL2PTBasePtr       */
                    0,                      /* capLVL2PTIsMapped      */
@@ -321,7 +315,6 @@ Arch_decodeInvocation(
 {
     switch (cap_get_capType(cap)) {
     case cap_page_directory_cap:
-    case cap_lvl2_page_table_cap:
     case cap_page_table_cap:
     case cap_frame_cap:
     case cap_asid_control_cap:

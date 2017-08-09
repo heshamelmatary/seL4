@@ -36,7 +36,8 @@ block frame_cap {
 
 -- Second-level page table
 block page_table_cap {
-    padding                         4
+    padding                         1
+    field       capLevel            3
     field       capPTMappedASID     12
     field_high  capPTBasePtr        48
 
@@ -56,17 +57,6 @@ block page_directory_cap {
     padding                         10
     field       capPDIsMapped       1
     field_high  capPDMappedAddress  48
-}
-
-block lvl2_page_table_cap {
-    padding                         4
-    field       capLVL2PTMappedASID    12
-    field_high  capLVL2PTBasePtr       48
-
-    field       capType                 5
-    padding                             10
-    field       capLVL2PTIsMapped       1
-    field_high  capLVL2PTMappedAddress  48
 }
 
 -- Cap to the table of 2^6 ASID pools
@@ -105,7 +95,6 @@ tagged_union cap capType {
     -- 5-bit tag arch caps
     tag frame_cap           1
     tag page_table_cap      3
-    tag lvl2_page_table_cap 5
     tag page_directory_cap  7
     tag asid_control_cap    11
     tag asid_pool_cap       13
