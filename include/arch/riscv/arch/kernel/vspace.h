@@ -63,42 +63,42 @@ typedef struct lookupLVL2PTSlot_ret lookupLVL2PTSlot_ret_t;
 
 struct lookupPDSlot_ret {
     exception_t status;
-    pde_t*      pdSlot;
+    pte_t*      pdSlot;
 };
 
 typedef struct lookupPDSlot_ret lookupPDSlot_ret_t;
 
 struct findVSpaceForASID_ret {
     exception_t status;
-    pde_t *vspace_root;
+    pte_t *vspace_root;
 };
 typedef struct findVSpaceForASID_ret findVSpaceForASID_ret_t;
 
-void copyGlobalMappings(pde_t *newPD);
+void copyGlobalMappings(pte_t *newPD);
 word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
-lookupPTSlot_ret_t lookupPTSlot(pde_t *pd, vptr_t vptr);
-lookupPDSlot_ret_t CONST lookupPDSlot(pde_t *pd, vptr_t vptr);
+lookupPTSlot_ret_t lookupPTSlot(pte_t *pd, vptr_t vptr);
+lookupPDSlot_ret_t CONST lookupPDSlot(pte_t *pd, vptr_t vptr);
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
-void flushAllPageTables(pde_t *pd);
-void unmapAllPageTables(pde_t *pd);
+void flushAllPageTables(pte_t *pd);
+void unmapAllPageTables(pte_t *pd);
 void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt);
 void unmapAllPages(pte_t *pt);
 bool_t CONST isValidVTableRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
                                seL4_CapRights_t cap_rights_mask);
-void setCurrentASID(pde_t *pd);
-void flushPage(vm_page_size_t page_size, pde_t* pd, word_t vptr);
-void flushTable(pde_t* pd, word_t vptr, pte_t* pt);
+void setCurrentASID(pte_t *pd);
+void flushPage(vm_page_size_t page_size, pte_t* pd, word_t vptr);
+void flushTable(pte_t* pd, word_t vptr, pte_t* pt);
 exception_t decodeMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
                                 cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                                 word_t *buffer);
 exception_t performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
-                                          pde_t pde, pde_t *pdSlot);
+                                          pte_t pde, pte_t *pdSlot);
 exception_t performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot);
 exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
                                         pte_t pte, pte_range_t pte_entries);
 exception_t performPageInvocationMapPDE(cap_t cap, cte_t *ctSlot,
-                                        pde_t pde, pde_range_t pde_entries);
+                                        pte_t pde, pde_range_t pde_entries);
 exception_t performPageInvocationUnmap(cap_t cap, cte_t *ctSlot);
 #endif

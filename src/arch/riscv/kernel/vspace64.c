@@ -35,11 +35,11 @@ struct resolve_ret {
 };
 typedef struct resolve_ret resolve_ret_t;
 
-static resolve_ret_t resolveVAddr(pde_t *pd, vptr_t vaddr);
+static resolve_ret_t resolveVAddr(pte_t *pd, vptr_t vaddr);
 static exception_t performPageGetAddress(void *vbase_ptr);
 
 static bool_t PURE pteCheckIfMapped(pte_t *pte);
-static bool_t PURE pdeCheckIfMapped(pde_t *pde);
+static bool_t PURE pdeCheckIfMapped(pte_t *pde);
 
 
 static word_t CONST
@@ -98,7 +98,7 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
 BOOT_CODE VISIBLE void
 map_kernel_window(uint64_t sbi_pt)
 {
-    pde_t    pde;
+    pte_t    pde;
     uint64_t  i, pt_index;
     uint32_t temp;
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
@@ -106,7 +106,7 @@ map_kernel_window(uint64_t sbi_pt)
 
     /* Note, this assumes the kernel is mapped to 0xFFFFFFFF80000000 */
     /* 256 MiB kernel mapping (128 PTE * 2MiB per entry) */
-    l1pt[SV39_GET_LVL1_PT_INDEX(kernelBase)] =  pde_new(
+    l1pt[SV39_GET_LVL1_PT_INDEX(kernelBase)] =  pte_new(
                                                     (addrFromPPtr(l2pt) >> RISCV_4K_PageBits),
                                                     0,  /* sw */
                                                     1,  /* dirty */
@@ -152,7 +152,7 @@ map_kernel_window(uint64_t sbi_pt)
 BOOT_CODE void
 map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 {
-    pde_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
+    pte_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
     pte_t* pt   = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(pt_cap));
     vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
 
@@ -178,7 +178,7 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 BOOT_CODE void
 map_it_lvl2_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 {
-    pde_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
+    pte_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
     pte_t* pt   = PTE_PTR(cap_lvl2_page_table_cap_get_capLVL2PTBasePtr(pt_cap));
     vptr_t vptr = cap_lvl2_page_table_cap_get_capLVL2PTMappedAddress(pt_cap);
     uint32_t pdIndex = SV39_GET_LVL1_PT_INDEX(vptr);
@@ -200,7 +200,7 @@ map_it_lvl2_pt_cap(cap_t vspace_cap, cap_t pt_cap)
 BOOT_CODE void
 map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
 {
-    pde_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
+    pte_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
     pte_t* frame_pptr   = PTE_PTR(cap_frame_cap_get_capFBasePtr(frame_cap));
     vptr_t frame_vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
     uint32_t pdIndex = SV39_GET_LVL1_PT_INDEX(frame_vptr);
@@ -227,7 +227,7 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
 BOOT_CODE void
 unmap_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
 {
-    pde_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
+    pte_t* pd   = PDE_PTR(pptr_of_cap(vspace_cap));
     pte_t* frame_pptr   = PTE_PTR(cap_frame_cap_get_capFBasePtr(frame_cap));
     vptr_t frame_vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
     uint32_t pdIndex = SV39_GET_LVL1_PT_INDEX(frame_vptr);
@@ -394,7 +394,7 @@ findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 {
     findVSpaceForASID_ret_t ret;
     asid_pool_t*        poolPtr;
-    pde_t*     vspace_root;
+    pte_t*     vspace_root;
 
     poolPtr = riscvKSASIDTable[asid >> asidLowBits];
     if (!poolPtr) {
@@ -430,7 +430,7 @@ bool_t CONST isValidNativeRoot(cap_t cap)
            cap_page_directory_cap_get_capPDIsMapped(cap);
 }
 
-pde_t *getValidNativeRoot(cap_t vspace_cap)
+pte_t *getValidNativeRoot(cap_t vspace_cap)
 {
     if (isValidNativeRoot(vspace_cap)) {
         return PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vspace_cap));
@@ -439,10 +439,10 @@ pde_t *getValidNativeRoot(cap_t vspace_cap)
 }
 
 void
-copyGlobalMappings(pde_t *newPD)
+copyGlobalMappings(pte_t *newPD)
 {
     unsigned int i;
-    pde_t *global_pd = l1pt;
+    pte_t *global_pd = l1pt;
 
     for (i = SV39_GET_LVL1_PT_INDEX(kernelBase); i < 512; i++) {
         newPD[i] = global_pd[i];
@@ -479,7 +479,7 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
 }
 
 lookupPDSlot_ret_t CONST
-lookupPDSlot(pde_t *pd, vptr_t vptr)
+lookupPDSlot(pte_t *pd, vptr_t vptr)
 {
     lookupPDSlot_ret_t ret;
     unsigned int pdIndex;
@@ -490,7 +490,7 @@ lookupPDSlot(pde_t *pd, vptr_t vptr)
 }
 
 static lookupLVL2PTSlot_ret_t CONST
-lookupLVL2PTSlot(pde_t *pd, vptr_t vptr)
+lookupLVL2PTSlot(pte_t *pd, vptr_t vptr)
 {
     lookupPDSlot_ret_t lvl1Slot = lookupPDSlot(pd, vptr);
     lookupLVL2PTSlot_ret_t ret;
@@ -519,7 +519,7 @@ lookupLVL2PTSlot(pde_t *pd, vptr_t vptr)
 }
 
 lookupPTSlot_ret_t
-lookupPTSlot(pde_t *pd, vptr_t vptr)
+lookupPTSlot(pte_t *pd, vptr_t vptr)
 {
     lookupLVL2PTSlot_ret_t lvl2Slot = lookupLVL2PTSlot(pd, vptr);
     lookupPTSlot_ret_t ret;
@@ -624,7 +624,7 @@ void hwASIDInvalidate(asid_t asid)
     return;
 }
 
-void deleteASID(asid_t asid, pde_t *vspace)
+void deleteASID(asid_t asid, pte_t *vspace)
 {
     asid_pool_t* poolPtr;
 
@@ -636,12 +636,12 @@ void deleteASID(asid_t asid, pde_t *vspace)
     }
 }
 
-pde_t *
+pte_t *
 pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt)
 {
     findVSpaceForASID_ret_t find_ret;
     lookupLVL2PTSlot_ret_t lu_lvl2pt_ret;
-    pde_t pde;
+    pte_t pde;
     pte_t *lvl2_pte;
 
     unsigned int pdIndex;
@@ -706,7 +706,7 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, void *pptr)
     lookupPTSlot_ret_t  lu_ret;
     cap_t               threadRoot;
     lookupPDSlot_ret_t  pd_ret;
-    pde_t               *pde;
+    pte_t               *pde;
 
     find_ret = findVSpaceForASID(asid);
     if (find_ret.status != EXCEPTION_NONE) {
@@ -742,7 +742,7 @@ setVMRoot(tcb_t *tcb)
 {
     cap_t threadRoot;
     asid_t asid;
-    pde_t *pd;
+    pte_t *pd;
     findVSpaceForASID_ret_t  find_ret;
 
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
@@ -852,8 +852,8 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
     word_t vaddr, pdIndex;
     vm_attributes_t attr;
     cap_t pdCap;
-    pde_t *pd, *pdSlot;
-    pde_t pde;
+    pte_t *pd, *pdSlot;
+    pte_t pde;
     paddr_t paddr;
     lookupPDSlot_ret_t lu_ret;
     asid_t          asid;
@@ -940,7 +940,7 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
     paddr = addrFromPPtr(
                 PTE_PTR(cap_lvl2_page_table_cap_get_capLVL2PTBasePtr(cap)));
 
-    pde = pde_new(
+    pde = pte_new(
               (paddr >> RISCV_4K_PageBits),
               0, /* sw */
               1, /* dirty */
@@ -967,8 +967,8 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     word_t vaddr, pdIndex;
     vm_attributes_t attr;
     cap_t pdCap;
-    pde_t *pd, *pdSlot;
-    pde_t pde;
+    pte_t *pd, *pdSlot;
+    pte_t pde;
     paddr_t paddr;
     lookupLVL2PTSlot_ret_t lu_ret;
     asid_t          asid;
@@ -1055,7 +1055,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     paddr = addrFromPPtr(
                 PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
 
-    pde = pde_new(
+    pde = pte_new(
               (paddr >> RISCV_4K_PageBits),
               0, /* sw */
               1, /* dirty */
@@ -1082,15 +1082,15 @@ typedef struct create_mappings_pte_return create_mappings_pte_return_t;
 
 struct create_mappings_pde_return {
     exception_t status;
-    pde_t pde;
-    pde_range_t pde_entries;
+    pte_t pde;
+    pte_range_t pde_entries;
 };
 typedef struct create_mappings_pde_return create_mappings_pde_return_t;
 
 static create_mappings_pte_return_t
 createSafeMappingEntries_PTE
 (paddr_t base, word_t vaddr, vm_page_size_t frameSize,
- vm_rights_t vmRights, vm_attributes_t attr, pde_t *pd)
+ vm_rights_t vmRights, vm_attributes_t attr, pte_t *pd)
 {
     create_mappings_pte_return_t ret;
     lookupPTSlot_ret_t lu_ret;
@@ -1169,7 +1169,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         word_t vaddr, vtop, w_rightsMask;
         paddr_t frame_paddr;
         cap_t pdCap;
-        pde_t *pd;
+        pte_t *pd;
         asid_t asid;
         vm_rights_t capVMRights, vmRights;
         vm_page_size_t frameSize;
@@ -1524,7 +1524,7 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
 
 exception_t
 performPageTableInvocationMap(cap_t cap, cte_t *ctSlot,
-                              pde_t pde, pde_t *pdSlot)
+                              pte_t pde, pte_t *pdSlot)
 {
     ctSlot->cap = cap;
     *pdSlot = pde;

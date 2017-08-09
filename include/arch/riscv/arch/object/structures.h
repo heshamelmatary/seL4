@@ -58,17 +58,20 @@ enum vm_rights {
 };
 typedef uint32_t vm_rights_t;
 
-typedef pde_t vspace_root_t;
+typedef pte_t vspace_root_t;
+
+/* just in case */
+typedef pte_t pde_t;
 
 #define PDE_SIZE_BITS 2
-#define PDE_PTR(r) ((pde_t *)(r))
+#define PDE_PTR(r) ((pte_t *)(r))
 #define PDE_REF(p) ((unsigned int)(p))
 
-#define PDE_PTR_PTR(r) ((pde_t **)r)
+#define PDE_PTR_PTR(r) ((pte_t **)r)
 
 #define PD_BITS 10
 #define PD_SIZE_BITS (PDE_SIZE_BITS + PD_BITS)
-#define PD_PTR(r) ((pde_t *)(r))
+#define PD_PTR(r) ((pte_t *)(r))
 #define PD_REF(p) ((void *)(p))
 
 /* Page directory entries (PDEs) */

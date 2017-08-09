@@ -1,14 +1,14 @@
---                                                                             
--- Copyright 2017, Data61                                                      
--- Commonwealth Scientific and Industrial Research Organisation (CSIRO)        
--- ABN 41 687 119 230.                                                         
---                                                                             
--- This software may be distributed and modified according to the terms of     
+--
+-- Copyright 2017, Data61
+-- Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+-- ABN 41 687 119 230.
+--
+-- This software may be distributed and modified according to the terms of
 -- the GNU General Public License version 2. Note that NO WARRANTY is provided.
--- See "LICENSE_GPLv2.txt" for details.                                        
---                                                                             
--- @TAG(DATA61_GPL)                                                            
---                                                                            
+-- See "LICENSE_GPLv2.txt" for details.
+--
+-- @TAG(DATA61_GPL)
+--
 
 #include <config.h>
 
@@ -73,7 +73,7 @@ block lvl2_page_table_cap {
 block asid_control_cap {
     padding 64
 
-    field   capType     5   
+    field   capType     5
     padding             59
 }
 
@@ -82,7 +82,7 @@ block asid_pool_cap {
     padding 64
 
     field       capType         5
-    field       capASIDBase     12  
+    field       capASIDBase     12
     padding                     10
     field_high  capASIDPool     37
 }
@@ -145,23 +145,12 @@ block stored_hw_asid {
 block pte {
     padding                16
     field physical_address 38
-    field sw               2 
+    field sw               2
     field dirty            1
     field read             1
     field global           1
     field type             4
     field valid            1
-}
-
-block pde {
-    padding                   16
-    field physical_address    38
-    field sw                  2
-    field dirty               1
-    field read                1
-    field global              1
-    field type                4
-    field valid               1
 }
 
 block pte_type {

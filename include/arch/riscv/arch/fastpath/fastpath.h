@@ -39,7 +39,7 @@ compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
 #define cap_vtable_cap_get_vspace_root_fp(vtable_cap) PDE_PTR(cap_page_directory_cap_get_capPDBasePtr(vtable_cap))
 
 static inline void FORCE_INLINE
-switchToThread_fp(tcb_t *thread, pde_t *vroot, pde_t stored_hw_asid)
+switchToThread_fp(tcb_t *thread, pte_t *vroot, pte_t stored_hw_asid)
 {
     asid_t asid = (asid_t)(stored_hw_asid.words[0] & 0xffff);
 

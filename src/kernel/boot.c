@@ -387,7 +387,7 @@ create_idle_thread(void)
         }
         memzero((void *)pptr, 1 << seL4_TCBBits);
         NODE_STATE_ON_CORE(ksIdleThread, i) = TCB_PTR(pptr + TCB_OFFSET);
-        configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, i), i);
+        configureIdleThread(NODE_STATE_ON_CORE(ksIdleThread, 0), 0);
 #ifdef CONFIG_DEBUG_BUILD
         setThreadName(NODE_STATE_ON_CORE(ksIdleThread, i), "idle_thread");
 #endif

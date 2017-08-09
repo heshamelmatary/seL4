@@ -288,7 +288,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
 
     case seL4_RISCV_PageDirectoryObject:
         memzero(regionBase, 1 << RISCV_4K_PageBits);
-        copyGlobalMappings((pde_t *)regionBase);
+        copyGlobalMappings((pte_t *)regionBase);
 
         return cap_page_directory_cap_new(
                    asidInvalid,                /* capPDMappedASID      */
