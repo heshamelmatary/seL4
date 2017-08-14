@@ -850,9 +850,9 @@ checkVPAlignment(vm_page_size_t sz, word_t w)
 }
 
 static exception_t
-decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
-                                   cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                                   word_t *buffer)
+decodeRISCVPageTableInvocation(word_t label, unsigned int length,
+                               cte_t *cte, cap_t cap, extra_caps_t extraCaps,
+                               word_t *buffer, uint32_t level)
 {
     word_t vaddr, pdIndex;
     vm_attributes_t attr;
@@ -860,137 +860,28 @@ decodeRISCVLVL2PageTableInvocation(word_t label, unsigned int length,
     pte_t *pd, *pdSlot;
     pte_t pde;
     paddr_t paddr;
-    lookupPDSlot_ret_t lu_ret;
+    lookupPDSlot_ret_t lu_ret_pd;
+    lookupLVL2PTSlot_ret_t lu_ret;
     asid_t          asid;
 
-    if (label == RISCVLVL2PageTableUnmap) {
-        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-        return performPageTableInvocationUnmap (cap, cte);
-    }
-
-    if (unlikely(label != RISCVLVL2PageTableMap)) {
+    /* On RISC-V 64-bit, we only support 3 level page tables */
+    if (level < 1 || level > 3) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(length < 2 || extraCaps.excaprefs[0] == NULL)) {
-        current_syscall_error.type = seL4_TruncatedMessage;
+    /* No invocations at level 1 page table (aka page directory) are supported */
+    if (level == 1) {
+        current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    vaddr = getSyscallArg(0, buffer);
-    attr = vmAttributesFromWord(getSyscallArg(1, buffer));
-    pdCap = extraCaps.excaprefs[0]->cap;
-
-    if (!isValidNativeRoot(pdCap)) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(cap_get_capType(pdCap) != cap_page_table_cap)) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    if (unlikely(cap_page_table_cap_get_capLevel(pdCap) != 1 )) {
-        current_syscall_error.type = seL4_InvalidCapability;
-        current_syscall_error.invalidCapNumber = 1;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    pd = PDE_PTR(cap_page_table_cap_get_capPTBasePtr(pdCap));
-    asid = cap_page_table_cap_get_capPTMappedASID(pdCap);
-
-    if (unlikely(vaddr >= kernelBase)) {
-        current_syscall_error.type = seL4_InvalidArgument;
-        current_syscall_error.invalidArgumentNumber = 0;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    {
-        findVSpaceForASID_ret_t find_ret;
-
-        find_ret = findVSpaceForASID(asid);
-        if (find_ret.status != EXCEPTION_NONE) {
-            current_syscall_error.type = seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource = false;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-
-        if (find_ret.vspace_root != pd) {
-            current_syscall_error.type = seL4_InvalidCapability;
-            current_syscall_error.invalidCapNumber = 1;
-
-            return EXCEPTION_SYSCALL_ERROR;
-        }
-    }
-
-    lu_ret = lookupPDSlot(pd, vaddr);
-
-    if (lu_ret.status != EXCEPTION_NONE) {
-        current_syscall_error.type = seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource = false;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    pdSlot = lu_ret.pdSlot;
-
-    if (unlikely( *((uint64_t *) pdSlot) != 0) ) {
-        current_syscall_error.type = seL4_DeleteFirst;
-
-        return EXCEPTION_SYSCALL_ERROR;
-    }
-
-    paddr = addrFromPPtr(
-                PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
-
-    pde = pte_new(
-              (paddr >> RISCV_4K_PageBits),
-              0, /* sw */
-              1, /* dirty */
-              1, /* read */
-              0,  /* global */
-              pte_type_new(0, 0, 0, 0).words[0], /* type */
-              1 /* valid */
-          );
-
-    cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
-    cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
-    cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
-
-    setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-    return performPageTableInvocationMap(cap, cte, pde, pdSlot);
-
-}
-
-static exception_t
-decodeRISCVPageTableInvocation(word_t label, unsigned int length,
-                               cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                               word_t *buffer)
-{
-    word_t vaddr, pdIndex;
-    vm_attributes_t attr;
-    cap_t pdCap;
-    pte_t *pd, *pdSlot;
-    pte_t pde;
-    paddr_t paddr;
-    lookupLVL2PTSlot_ret_t lu_ret;
-    asid_t          asid;
-
-    if (label == RISCVPageTableUnmap) {
+    if (label == RISCVPageTableUnmap || label == RISCVLVL2PageTableUnmap) {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
         return performPageTableInvocationUnmap (cap, cte);
     }
 
-    if (unlikely(label != RISCVPageTableMap)) {
+    if (unlikely((label != RISCVPageTableMap) && (label != RISCVLVL2PageTableMap))) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -1054,20 +945,37 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         }
     }
 
-    lu_ret = lookupLVL2PTSlot(pd, vaddr);
+    /* TODO combine the below functions in just one */
+    if (level == 2) {
+        lu_ret_pd = lookupPDSlot(pd, vaddr);
 
-    if (lu_ret.status != EXCEPTION_NONE) {
-        current_syscall_error.type = seL4_FailedLookup;
-        current_syscall_error.failedLookupWasSource = false;
+        if (lu_ret_pd.status != EXCEPTION_NONE) {
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
 
-        return EXCEPTION_SYSCALL_ERROR;
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        pdSlot = lu_ret_pd.pdSlot;
+
+    } else if (level == 3) {
+        lu_ret = lookupLVL2PTSlot(pd, vaddr);
+
+        if (lu_ret.status != EXCEPTION_NONE) {
+            current_syscall_error.type = seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource = false;
+
+            return EXCEPTION_SYSCALL_ERROR;
+        }
+
+        pdSlot = lu_ret.ptSlot;
+
+    } else {
+        pdSlot = 0;
     }
-
-    pdSlot = lu_ret.ptSlot;
 
     if (unlikely( *((uint64_t *) pdSlot) != 0) ) {
         current_syscall_error.type = seL4_DeleteFirst;
-
         return EXCEPTION_SYSCALL_ERROR;
     }
 
@@ -1084,7 +992,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
               1 /* valid */
           );
 
-    cap = cap_page_table_cap_set_capLevel(cap, 3);
+    cap = cap_page_table_cap_set_capLevel(cap, level);
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
@@ -1377,21 +1285,6 @@ pageBase(vptr_t vaddr, vm_page_size_t size)
     return vaddr & ~MASK(pageBitsForSize(size));
 }
 
-static exception_t
-decodeRISCVPageDirectoryInvocation
-(
-    word_t label,
-    unsigned int length,
-    cte_t* cte,
-    cap_t cap,
-    extra_caps_t extraCaps,
-    word_t* buffer
-)
-{
-    current_syscall_error.type = seL4_IllegalOperation;
-    return EXCEPTION_SYSCALL_ERROR;
-}
-
 exception_t
 decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
@@ -1402,16 +1295,7 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
     switch (cap_get_capType(cap)) {
 
     case cap_page_table_cap:
-        switch (pt_level) {
-        case 1:
-            return decodeRISCVPageDirectoryInvocation(label, length, cte, cap, extraCaps, buffer);
-        case 2:
-            return decodeRISCVLVL2PageTableInvocation(label, length, cte, cap, extraCaps, buffer);
-        case 3:
-            return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer);
-        default:
-            fail("Invalid page table level\n");
-        }
+        return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer, pt_level);
 
     case cap_frame_cap:
         return decodeRISCVFrameInvocation(label, length, cte, cap, extraCaps, buffer);
