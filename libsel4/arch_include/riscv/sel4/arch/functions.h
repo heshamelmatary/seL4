@@ -20,9 +20,7 @@ enum {
 static inline seL4_IPCBuffer*
 seL4_GetIPCBuffer(void)
 {
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
-    return *(seL4_IPCBuffer**)seL4_GlobalsFrame;
-#elif defined(CONFIG_IPC_BUF_IN_RISCV_TP_REGISTER)
+#if defined(CONFIG_IPC_BUF_IN_RISCV_TP_REGISTER)
     seL4_Word reg;
     asm ("mv %0, tp" : "=r"(reg));
     return (seL4_IPCBuffer*)reg;

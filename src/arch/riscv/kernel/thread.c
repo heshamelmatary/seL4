@@ -20,9 +20,7 @@ Arch_switchToThread(tcb_t *tcb)
 {
     setVMRoot(tcb);
 
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
-    *riscvKSGlobalsFrame = tcb->tcbIPCBuffer;
-#elif defined(CONFIG_IPC_BUF_IN_RISCV_TP_REGISTER)
+#if defined(CONFIG_IPC_BUF_IN_RISCV_TP_REGISTER)
     setRegister(tcb, tp, tcb->tcbIPCBuffer);
 #else
 #error "Unknown IPC buffer strategy"
@@ -47,10 +45,6 @@ Arch_switchToIdleThread(void)
 
     /* Force the idle thread to run on kernel page table */
     setVMRoot(tcb);
-
-#ifdef CONFIG_IPC_BUF_GLOBALS_FRAME
-    *riscvKSGlobalsFrame = 0;
-#endif /* CONFIG_IPC_BUF_GLOBALS_FRAME */
 }
 
 void CONST

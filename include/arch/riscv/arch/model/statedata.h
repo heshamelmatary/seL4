@@ -27,7 +27,6 @@ NODE_STATE_BEGIN(archNodeState)
 NODE_STATE_DECLARE(word_t, ipiReschedulePending);
 NODE_STATE_END(archNodeState);
 
-extern word_t riscvKSGlobalsFrame[BIT(PAGE_BITS) / sizeof(word_t)] ALIGN_BSS(BIT(PAGE_BITS));
 extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
 /* RISC-V has 3-level page tables, each of which is 4KiB, PTEs are of word_t size */

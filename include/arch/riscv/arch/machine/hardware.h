@@ -17,14 +17,6 @@
 
 /* Kernel PPTR window range is currently (0xFFFFFFFF80000000 - 0xFFFFFFFF90000000) */
 
-/* Last 2 MiB (2^21) large page of kernel's window ( 0xFFFFFFFF90000000 - 0x200000) */
-#define PPTR_GLOBALS_PAGE 0xFFFFFFFF8FE00000UL
-
-/* The stack is the very last page of virtual memory. */
-/* TODO: The following stack definition is to be removed with multicore support */
-#define PPTR_KERNEL_STACK 0xFFFFFFFF8FFF1000
-#define PPTR_KERNEL_STACK_TOP PPTR_KERNEL_STACK + 0x1000 - 16
-
 /* MMU RISC-V/SV39 related definitions. See RISC-V manual priv-1.10 */
 #define SV39_LVL1_PT_BITS  9
 #define SV39_LVL2_PT_BITS  9

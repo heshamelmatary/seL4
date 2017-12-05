@@ -146,18 +146,6 @@ map_kernel_window(uint64_t sbi_pt)
     /* now start initialising the page table */
     memzero(l3pt, BIT(RISCV_4K_PageBits));
 
-    /* map global page */
-    map_kernel_frame(
-        addrFromPPtr(riscvKSGlobalsFrame),
-        PPTR_GLOBALS_PAGE,
-        VMReadOnly);
-
-    /* map kernel stack */
-    map_kernel_frame(
-        addrFromPPtr(kernel_stack_alloc),
-        PPTR_KERNEL_STACK,
-        VMKernelOnly);
-
     setCurrentPD(addrFromPPtr(l1pt), 0);
 }
 

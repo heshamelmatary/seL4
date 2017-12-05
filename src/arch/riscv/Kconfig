@@ -20,14 +20,9 @@ choice
         Controls how the location of the IPC buffer is
         provided to the user
 
-    config IPC_BUF_GLOBALS_FRAME
-        bool "Globals frame"
-        depends on ARCH_RISCV
-        help
-            Put the address of the IPC buffer in a dedicated
-            frame that is read only at user level.
     config IPC_BUF_IN_RISCV_TP_REGISTER
         bool "TP register"
+        default y
         help
             Put the address of the IPC buffer in the user
             readable/writeable TP register. When enabled

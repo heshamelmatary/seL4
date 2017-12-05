@@ -18,9 +18,6 @@
 #include <arch/linker.h>
 #include <plat/machine/hardware.h>
 
-/* The global frame, mapped in all address spaces */
-word_t riscvKSGlobalsFrame[BIT(PAGE_BITS) / sizeof(word_t)] ALIGN_BSS(BIT(PAGE_BITS));
-
 /* The top level asid mapping table */
 asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 

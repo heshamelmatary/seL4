@@ -40,8 +40,7 @@ Arch_migrateTCB(tcb_t *thread)
 void
 Arch_setTCBIPCBuffer(tcb_t *thread, word_t bufferAddr)
 {
-#if defined(CONFIG_IPC_BUF_GLOBALS_FRAME)
-#elif defined(CONFIG_IPC_BUF_IN_RISCV_TP_REGISTER)
+#if defined(CONFIG_IPC_BUF_IN_RISCV_TP_REGISTER)
     setRegister(thread, tp, bufferAddr);
 #else
 #error "Unknown IPC buffer strategy"
