@@ -562,8 +562,8 @@ lookupPTSlot(pde_t *pd, vptr_t vptr)
 exception_t
 handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType)
 {
-    uint32_t addr;
-    uint32_t fault;
+    uint64_t addr;
+    uint64_t fault;
 
     addr = read_csr(sbadaddr);
 
