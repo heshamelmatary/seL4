@@ -30,8 +30,8 @@ NODE_STATE_END(archNodeState);
 extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
 /* RISC-V has 3-level page tables, each of which is 4KiB, PTEs are of word_t size */
-extern pde_t l1pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] __attribute__ ((aligned(BIT(RISCV_4K_PageBits))));
-extern pte_t l2pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] __attribute__ ((aligned(BIT(RISCV_4K_PageBits))));
-extern pte_t l3pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] __attribute__ ((aligned(BIT(RISCV_4K_PageBits))));
+extern pde_t l1pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] ALIGN(BIT(RISCV_4K_PageBits));
+extern pte_t l2pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] ALIGN(BIT(RISCV_4K_PageBits));
+extern pte_t l3pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] ALIGN(BIT(RISCV_4K_PageBits));
 
 #endif
