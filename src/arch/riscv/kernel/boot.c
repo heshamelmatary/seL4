@@ -17,7 +17,7 @@
 #include <arch/kernel/boot.h>
 #include <arch/kernel/vspace.h>
 #include <arch/benchmark.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/hardware.h>
 #include <machine.h>
 #include <stdarg.h>

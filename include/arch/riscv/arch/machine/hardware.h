@@ -33,7 +33,7 @@
 #include <arch/types.h>
 #include <config.h>
 #include <arch/types.h>
-#include <arch/linker.h>
+#include <linker.h>
 
 /*
  * These values are defined in RISC-V priv-1.10 manual, they represent the

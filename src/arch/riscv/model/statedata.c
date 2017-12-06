@@ -15,7 +15,7 @@
 #include <arch/types.h>
 #include <arch/model/statedata.h>
 #include <arch/object/structures.h>
-#include <arch/linker.h>
+#include <linker.h>
 #include <plat/machine/hardware.h>
 
 /* The top level asid mapping table */

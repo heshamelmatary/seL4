@@ -15,16 +15,4 @@
 
 #include <util.h>
 
-/* code that is only used during kernel bootstrapping */
-#define BOOT_CODE SECTION(".boot.text")
-
-/* read-only data only used during kernel bootstrapping */
-#define BOOT_RODATA SECTION(".boot.rodata")
-
-/* read/write data only used during kernel bootstrapping */
-#define BOOT_DATA SECTION(".boot.data")
-
-/* data will be aligned to n bytes in a special BSS section */
-#define ALIGN_BSS(n) ALIGN(n) SECTION(".bss.aligned")
-
 #endif
