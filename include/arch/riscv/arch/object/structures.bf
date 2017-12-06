@@ -123,19 +123,13 @@ block pte {
     field physical_address 38
     field sw               2
     field dirty            1
-    field read             1
+    field accessed         1
     field global           1
-    field type             4
+    field user             1
+    field execute          1
+    field write            1
+    field read             1
     field valid            1
-}
-
-block pte_type {
-    padding         32
-    padding         28
-    field user      1
-    field execute   1
-    field write     1
-    field read      1
 }
 
 #include <arch/api/shared_types.bf>

@@ -43,36 +43,9 @@ static bool_t PURE pdeCheckIfMapped(pte_t *pde);
 
 
 static word_t CONST
-APFromVMRights(vm_rights_t vm_rights)
+RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
 {
-    switch (vm_rights) {
-    case VMNoAccess:
-        return 0;
-
-    case VMKernelOnly:
-        return pte_type_new(0, /* user */
-                            1, /* execute */
-                            1, /* write */
-                            1  /* read */
-                           ).words[0];
-
-    case VMReadOnly:
-        return pte_type_new(1, /* user */
-                            1, /* execute */
-                            0, /* write */
-                            1  /* read */
-                           ).words[0];
-
-    case VMReadWrite:
-        return pte_type_new(1, /* user */
-                            1, /* execute */
-                            1, /* write */
-                            1  /* read */
-                           ).words[0];
-
-    default:
-        fail("Invalid VM rights");
-    }
+    return vm_rights != VMNoAccess;
 }
 
 /* ==================== BOOT CODE STARTS HERE ==================== */
@@ -88,10 +61,13 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
                        paddr >> RISCV_4K_PageBits,
                        0,  /* sw */
                        1,  /* dirty */
-                       1,  /* read */
+                       1,  /* accessed */
                        1,  /* global */
-                       APFromVMRights(vm_rights), /* type */
-                       1 /* valid */
+                       0,  /* user */
+                       1,  /* execute */
+                       1,  /* write */
+                       1,  /* read */
+                       1   /* valid */
                    );
 }
 
@@ -110,10 +86,13 @@ map_kernel_window(uint64_t sbi_pt)
                                                     (addrFromPPtr(l2pt) >> RISCV_4K_PageBits),
                                                     0,  /* sw */
                                                     1,  /* dirty */
-                                                    1,  /* read */
+                                                    1,  /* accessed */
                                                     1,  /* global */
-                                                    pte_type_new(0, 0, 0, 0).words[0],
-                                                    1 /* valid */
+                                                    0,  /* user */
+                                                    0,  /* execute */
+                                                    0,  /* write */
+                                                    0,  /* read */
+                                                    1   /* valid */
                                                 );
 
     /* Map the kernel with 2M pages */
@@ -123,9 +102,12 @@ map_kernel_window(uint64_t sbi_pt)
                              (physBase + i) >> RISCV_4K_PageBits,
                              0,  /* sw */
                              1,  /* dirty */
-                             1,  /* read */
+                             1,  /* accessed */
                              1,  /* global */
-                             pte_type_new(0, 1, 1, 1).words[0],
+                             0,  /* user */
+                             1,  /* execute */
+                             1,  /* write */
+                             1,  /* read */
                              1 /* valid */
                          );
     }
@@ -137,9 +119,12 @@ map_kernel_window(uint64_t sbi_pt)
                      (addrFromPPtr(l3pt) >> RISCV_4K_PageBits),
                      0,  /* sw */
                      1,  /* dirty */
-                     1,  /* read */
+                     1,  /* accessed */
                      1,  /* global */
-                     pte_type_new(0, 0, 0, 0).words[0],
+                     0,  /* user */
+                     0,  /* execute */
+                     0,  /* write */
+                     0,  /* read */
                      1 /* valid */
                  );
 
@@ -167,9 +152,12 @@ map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
                       (addrFromPPtr(pt) >> RISCV_4K_PageBits),
                       0, /* sw */
                       1, /* dirty */
-                      1, /* read */
+                      1, /* accessed */
                       0,  /* global */
-                      pte_type_new(0, 0, 0, 0).words[0], /* type */
+                      0,  /* user */
+                      0,  /* execute */
+                      0,  /* write */
+                      0,  /* read */
                       1 /* valid */
                   );
     asm volatile ("sfence.vma");
@@ -189,9 +177,12 @@ map_it_lvl2_pt_cap(cap_t vspace_cap, cap_t pt_cap)
                       (addrFromPPtr(pt) >> RISCV_4K_PageBits),
                       0, /* sw */
                       1, /* dirty */
-                      1, /* read */
+                      1, /* accessed */
                       0,  /* global */
-                      pte_type_new(0, 0, 0, 0).words[0], /* type */
+                      0,  /* user */
+                      0,  /* execute */
+                      0,  /* write */
+                      0,  /* read */
                       1 /* valid */
                   );
     asm volatile ("sfence.vma");
@@ -216,10 +207,13 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
                       (pptr_to_paddr(frame_pptr) >> RISCV_4K_PageBits),
                       0, /* sw */
                       1, /* dirty */
-                      1, /* read */
+                      1, /* accessed */
                       0,  /* global */
-                      APFromVMRights(VMReadWrite), /* type */
-                      1 /* valid */
+                      1,  /* user */
+                      1,  /* execute */
+                      1,  /* write */
+                      1,  /* read */
+                      1   /* valid */
                   );
     asm volatile ("sfence.vma");
 }
@@ -243,9 +237,12 @@ unmap_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
                       (pptr_to_paddr(frame_pptr) >> RISCV_4K_PageBits),
                       0, /* sw */
                       0, /* dirty */
-                      0, /* read */
+                      0, /* accessed */
                       0,  /* global */
-                      APFromVMRights(VMReadWrite), /* type */
+                      0,  /* user */
+                      0,  /* execute */
+                      0,  /* write */
+                      0,  /* read */
                       0 /* valid */
                   );
     asm volatile ("sfence.vma");
@@ -687,9 +684,12 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
                           0,  /* phy_address */
                           0,  /* sw */
                           0,  /* dirty */
-                          0,  /* read */
+                          0,  /* accessed */
                           0,  /* global */
-                          0,  /* type */
+                          0,  /* user */
+                          0,  /* execute */
+                          0,  /* write */
+                          0,  /* read */
                           0  /* valid */
                       );
         asm volatile ("sfence.vma");
@@ -831,9 +831,12 @@ makeUserPTE(vm_page_size_t page_size, paddr_t paddr, vm_rights_t vm_rights)
                   paddr >> RISCV_4K_PageBits,
                   0, /* sw */
                   1, /* dirty */
+                  1, /* accessed */
+                  0, /* global */
+                  1, /* user */
+                  1, /* execute */
+                  RISCVGetWriteFromVMRights(vm_rights),  /* write */
                   1, /* read */
-                  0,  /* global */
-                  APFromVMRights(vm_rights), /* type */
                   1 /* valid */
               );
         break;
@@ -986,9 +989,12 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
               (paddr >> RISCV_4K_PageBits),
               0, /* sw */
               1, /* dirty */
-              1, /* read */
+              1, /* accessed */
               0,  /* global */
-              pte_type_new(0, 0, 0, 0).words[0], /* type */
+              0,  /* user */
+              0,  /* execute */
+              0,  /* write */
+              0,  /* read */
               1 /* valid */
           );
 
