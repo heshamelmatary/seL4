@@ -104,7 +104,7 @@ static inline void Arch_initContext(user_context_t* context)
 }
 
 static inline word_t CONST
-sanitiseRegister(register_t reg, word_t v, void *thread)
+sanitiseRegister(register_t reg, word_t v, bool_t archInfo)
 {
     /* FIXME */
     return v;

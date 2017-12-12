@@ -17,7 +17,11 @@
 #include <arch/types.h>
 
 struct pde_range {
+#ifdef ARCH_RISCV
+    pte_t *base;
+#else
     pde_t *base;
+#endif
     word_t length;
 };
 typedef struct pde_range pde_range_t;

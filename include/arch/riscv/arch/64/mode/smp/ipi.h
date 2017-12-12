@@ -10,18 +10,20 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_STDINT_H
-#define __ARCH_STDINT_H
+#ifndef __MODE_SMP_IPI_H
+#define __MODE_SMP_IPI_H
 
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long uint64_t;
-typedef unsigned long uintptr_t;
+#include <config.h>
+#include <types.h>
+#include <plat/machine.h>
+#include <smp/ipi.h>
 
-typedef signed char int8_t;
-typedef signed short int16_t;
-typedef signed int int32_t;
-typedef signed long int64_t;
+#if CONFIG_MAX_NUM_NODES > 1
 
-#endif
+typedef enum {
+    /* placeholder for 64-bit ARM IPI types */
+    IpiNumModeRemoteCall
+} IpiModeRemoteCall_t;
+
+#endif /* CONFIG_MAX_NUM_NODES */
+#endif /* __MODE_SMP_IPI_H */

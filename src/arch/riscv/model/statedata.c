@@ -21,6 +21,6 @@
 /* The top level asid mapping table */
 asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
-pte_t l1pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] ALIGN(BIT(RISCV_4K_PageBits));
-pte_t l2pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] ALIGN(BIT(RISCV_4K_PageBits));
-pte_t l3pt[BIT(RISCV_4K_PageBits) / sizeof(word_t)] ALIGN(BIT(RISCV_4K_PageBits));
+pte_t l1pt[BIT(seL4_PageDirBits) / sizeof(word_t)] ALIGN(BIT(seL4_PageTableBits));
+pte_t l2pt[BIT(seL4_PageDirBits) / sizeof(word_t)] ALIGN(BIT(seL4_PageTableBits));
+pte_t l3pt[BIT(seL4_PageDirBits) / sizeof(word_t)] ALIGN(BIT(seL4_PageTableBits));

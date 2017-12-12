@@ -34,4 +34,5 @@ VISIBLE SECTION(".vectors.text");
 void restore_user_context(void)
 VISIBLE NORETURN SECTION(".vectors.text");
 
+void handle_exception(void);
 #endif /* __KERNEL_RISCV_TRAPS_H */
