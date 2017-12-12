@@ -133,4 +133,14 @@ block pte {
     field valid            1
 }
 
+-- RISC-V SATP (priv-1.10) Supervisor Address Translation and Protection
+-- This register was originally named sptbr and some toolchains still use
+-- sptbr when it refers to satp.
+
+block satp {
+    field mode          4
+    field asid          16
+    field ppn           44
+}
+
 #include <arch/api/shared_types.bf>
