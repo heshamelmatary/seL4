@@ -17,20 +17,9 @@
  * Author: Hesham Almatary <heshamelmatary@gmail.com>
  */
 
-#ifndef __ARCH_KERNEL_THREAD_H
-#define __ARCH_KERNEL_THREAD_H
+#ifndef __ARCH_MACHINE_FP_H
+#define __ARCH_MACHINE_FP_H
 
-#include <object.h>
+/* Place holder for future RISC-V FPU header */
 
-void Arch_switchToThread(tcb_t *tcb);
-void Arch_switchToIdleThread(void);
-void Arch_configureIdleThread(tcb_t *tcb, int affinity);
-void CONST Arch_activateIdleThread(tcb_t *tcb);
-
-static inline bool_t CONST
-Arch_getSanitiseRegisterInfo(tcb_t *thread)
-{
-    return 0;
-}
-
-#endif
+#endif /* __ARCH_MACHINE_FP_H */
