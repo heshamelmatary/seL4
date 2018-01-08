@@ -16,24 +16,9 @@
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  */
 
-#include <config.h>
-#include <arch/sbi.h>
+#ifndef __ARCH_LINKER_H
+#define __ARCH_LINKER_H
 
-#pragma GCC optimize ("O3")
-void idle_thread(void)
-{
-    while (1) {
-        asm volatile("wfi");
-    }
-}
+#include <util.h>
 
-void VISIBLE halt(void)
-{
-#ifdef CONFIG_PRINTING
-    printf("halting...");
 #endif
-
-    sbi_shutdown();
-
-    UNREACHABLE();
-}

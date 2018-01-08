@@ -16,24 +16,15 @@
  * Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
  */
 
-#include <config.h>
-#include <arch/sbi.h>
+#include <util.h>
+#include <api/types.h>
+#include <arch/types.h>
+#include <arch/model/statedata.h>
+#include <arch/object/structures.h>
+#include <linker.h>
+#include <plat/machine/hardware.h>
 
-#pragma GCC optimize ("O3")
-void idle_thread(void)
-{
-    while (1) {
-        asm volatile("wfi");
-    }
-}
+/* The top level asid mapping table */
+asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
-void VISIBLE halt(void)
-{
-#ifdef CONFIG_PRINTING
-    printf("halting...");
-#endif
-
-    sbi_shutdown();
-
-    UNREACHABLE();
-}
+pte_t kernel_pageTables[CONFIG_PT_LEVELS][BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
