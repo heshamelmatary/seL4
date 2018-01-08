@@ -17,22 +17,15 @@
  * Author: Hesham Almatary <heshamelmatary@gmail.com>
  */
 
-#include <config.h>
 #include <util.h>
+#include <api/types.h>
+#include <arch/types.h>
+#include <arch/model/statedata.h>
+#include <arch/object/structures.h>
+#include <linker.h>
+#include <plat/machine/hardware.h>
 
-.section .boot.text, "ax"
-.global _start
-.extern init_kernel
-.extern kernel_stack_alloc
-.extern __global_pointer$
-.extern restore_user_context
-.extern trap_entry
+/* The top level asid mapping table */
+asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
-_start:
-  la gp, __global_pointer$
-
-  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
-  jal init_kernel
-
-  la ra, restore_user_context
-  jr ra
+pte_t kernel_pageTables[CONFIG_PT_LEVELS][BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));

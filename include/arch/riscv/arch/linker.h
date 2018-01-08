@@ -17,22 +17,9 @@
  * Author: Hesham Almatary <heshamelmatary@gmail.com>
  */
 
-#include <config.h>
+#ifndef __ARCH_LINKER_H
+#define __ARCH_LINKER_H
+
 #include <util.h>
 
-.section .boot.text, "ax"
-.global _start
-.extern init_kernel
-.extern kernel_stack_alloc
-.extern __global_pointer$
-.extern restore_user_context
-.extern trap_entry
-
-_start:
-  la gp, __global_pointer$
-
-  la sp, (kernel_stack_alloc + BIT(CONFIG_KERNEL_STACK_BITS))
-  jal init_kernel
-
-  la ra, restore_user_context
-  jr ra
+#endif
