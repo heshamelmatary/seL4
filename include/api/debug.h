@@ -77,7 +77,7 @@ debug_printUserState(void)
 {
     tcb_t *tptr = NODE_STATE(ksCurThread);
     printf("Current thread: %s\n", tptr->tcbName);
-    printf("Next instruction adress: %lx\n", getRestartPC(tptr));
+    //printf("Next instruction adress: %lx\n", getRestartPC(tptr));
     printf("Stack:\n");
     Arch_userStackTrace(tptr);
 }
