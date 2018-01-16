@@ -24,6 +24,18 @@
 #define SV39_GET_LVL2_PT_INDEX(addr) (((addr) >> 21) & MASK(SV39_LVL2_PT_BITS))
 #define SV39_GET_LVL3_PT_INDEX(addr) (((addr) >> 12) & MASK(SV39_LVL2_PT_BITS))
 
+#ifdef CONFIG_RISCV_SV48
+#define SV48_LVL1_PT_BITS  17
+#define SV48_LVL2_PT_BITS  9
+#define SV48_LVL3_PT_BITS  9
+#define SV48_LVL4_PT_BITS  9
+
+#define SV48_GET_LVL1_PT_INDEX(addr) (((addr) >> 39) & MASK(SV48_LVL1_PT_BITS))
+#define SV48_GET_LVL2_PT_INDEX(addr) (((addr) >> 30) & MASK(SV48_LVL2_PT_BITS))
+#define SV48_GET_LVL3_PT_INDEX(addr) (((addr) >> 21) & MASK(SV48_LVL3_PT_BITS))
+#define SV48_GET_LVL4_PT_INDEX(addr) (((addr) >> 12) & MASK(SV48_LVL4_PT_BITS))
+#endif /* CONFIG_RISCV_SV48 */
+
 #define L1_CACHE_LINE_SIZE 64
 
 #ifndef __ASSEMBLER__
@@ -50,7 +62,10 @@ typedef uint32_t vm_fault_type_t;
 enum vm_page_size {
     RISCV_4K_Page,
     RISCV_2M_Page,
-    RISCV_1G_Page
+    RISCV_1G_Page,
+#ifdef CONFIG_RISCV_SV48
+    RISCV_512G_Page
+#endif /* CONFIG_RISCV_SV48 */
 };
 
 typedef uint32_t vm_page_size_t;
@@ -58,7 +73,10 @@ typedef uint32_t vm_page_size_t;
 enum PageSizeConstants {
     RISCV_4K_PageBits  = 12,
     RISCV_2M_PageBits  = 21,
-    RISCV_1G_PageBits  = 30
+    RISCV_1G_PageBits  = 30,
+#ifdef CONFIG_RISCV_SV48
+    RISCV_512G_PageBits = 39
+#endif /* CONFIG_RISCV_SV48 */
 };
 
 static inline unsigned int CONST
@@ -73,6 +91,11 @@ pageBitsForSize(vm_page_size_t pagesize)
 
     case RISCV_1G_Page:
         return RISCV_1G_PageBits;
+
+#ifdef CONFIG_RISCV_SV48
+    case RISCV_512G_Page:
+        return RISCV_512G_PageBits;
+#endif /* CONFIG_RISCV_SV48 */
 
     default:
         fail("Invalid page size");

@@ -33,5 +33,8 @@ extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 extern pte_t l1pt[BIT(seL4_PageDirBits) / sizeof(word_t)] ALIGN(BIT(seL4_PageDirBits));
 extern pte_t l2pt[BIT(seL4_PageDirBits) / sizeof(word_t)] ALIGN(BIT(seL4_PageDirBits));
 extern pte_t l3pt[BIT(seL4_PageDirBits) / sizeof(word_t)] ALIGN(BIT(seL4_PageDirBits));
+#ifdef CONFIG_RISCV_SV48
+extern pte_t l4pt[BIT(seL4_PageDirBits) / sizeof(word_t)] ALIGN(BIT(seL4_PageTableBits));
+#endif /* CONFIG_RISCV_SV48 */
 
 #endif

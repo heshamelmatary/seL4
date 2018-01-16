@@ -54,10 +54,12 @@ RISCVGetWriteFromVMRights(vm_rights_t vm_rights)
 BOOT_CODE void
 map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
 {
-    uint32_t idx = SV39_GET_LVL3_PT_INDEX(vaddr);
-
     /* vaddr lies in the region the global PT covers */
     assert(vaddr >= PPTR_TOP);
+
+#ifndef CONFIG_RISCV_SV48
+    uint32_t idx = SV39_GET_LVL3_PT_INDEX(vaddr);
+
     l3pt[idx] =    pte_new(
                        paddr >> RISCV_4K_PageBits,
                        0,  /* sw */
@@ -70,8 +72,26 @@ map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
                        1,  /* read */
                        1   /* valid */
                    );
+#else
+    uint32_t idx = SV48_GET_LVL4_PT_INDEX(vaddr);
+
+    l4pt[idx] =    pte_new(
+                       paddr >> RISCV_4K_PageBits,
+                       0,  /* sw */
+                       1,  /* dirty */
+                       1,  /* accessed */
+                       1,  /* global */
+                       0,  /* user */
+                       1,  /* execute */
+                       1,  /* write */
+                       1,  /* read */
+                       1   /* valid */
+                   );
+
+#endif
 }
 
+#ifndef CONFIG_RISCV_SV48
 BOOT_CODE VISIBLE void
 map_kernel_window(uint64_t sbi_pt)
 {
@@ -81,6 +101,7 @@ map_kernel_window(uint64_t sbi_pt)
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
     /* up to end of virtual address space minus 4MB */
 
+    printf("Mapping kernel window\n");
     /* Note, this assumes the kernel is mapped to 0xFFFFFFFF80000000 */
     /* 256 MiB kernel mapping (128 PTE * 2MiB per entry) */
     l1pt[SV39_GET_LVL1_PT_INDEX(kernelBase)] =  pte_new(
@@ -134,6 +155,56 @@ map_kernel_window(uint64_t sbi_pt)
 
     setVSpaceRoot(addrFromPPtr(l1pt), 0);
 }
+#else
+BOOT_CODE VISIBLE void
+map_kernel_window(uint64_t unused)
+{
+    pte_t    pde;
+    uint64_t  i, pt_index;
+    uint32_t temp;
+    /* mapping of kernelBase (virtual address) to kernel's physBase  */
+
+    /* Note, this assumes the kernel is mapped to 0xFFFFFFFF80000000 */
+    /* 256 MiB kernel mapping (128 PTE * 2MiB per entry) */
+    l1pt[SV48_GET_LVL1_PT_INDEX(kernelBase)] =  pte_new(
+                                                    (addrFromPPtr(l2pt) >> RISCV_4K_PageBits),
+                                                    0,  /* sw */
+                                                    1,  /* dirty */
+                                                    1,  /* accessed */
+                                                    1,  /* global */
+                                                    0,  /* user */
+                                                    0,  /* execute */
+                                                    0,  /* write */
+                                                    0,  /* read */
+                                                    1   /* valid */
+                                                );
+
+    /* Map the kernel with 2M pages */
+    for (i = 0, pt_index = 0; i < BIT(RISCV_1G_PageBits) * 512; i += BIT(RISCV_1G_PageBits), pt_index++) {
+        /* The first two bits are always 0b11 since the MSB is 0xF */
+        l2pt[pt_index] = pte_new(
+                             (physBase + i) >> RISCV_4K_PageBits,
+                             0,  /* sw */
+                             1,  /* dirty */
+                             1,  /* accessed */
+                             1,  /* global */
+                             0,  /* user */
+                             1,  /* execute */
+                             1,  /* write */
+                             1,  /* read */
+                             1 /* valid */
+                         );
+    }
+
+    assert((physBase + i) == PADDR_TOP);
+
+    /* now start initialising the page table */
+    memzero(l3pt, BIT(RISCV_4K_PageBits));
+    memzero(l4pt, BIT(RISCV_4K_PageBits));
+
+    setVSpaceRoot(addrFromPPtr(l1pt), 0);
+}
+#endif
 
 BOOT_CODE void
 map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)

@@ -13,14 +13,18 @@
 
 #define physBase          0x0000000080C00000llu
 #define PADDR_BASE        physBase /* for compatibility with proofs */
+
+#ifndef CONFIG_RISCV_SV48
 #define kernelBase        0xFFFFFFFF80000000llu
+#define PPTR_TOP          0xFFFFFFFF8FE00000llu
+#else
+#define kernelBase        0xFFFFFF8000000000llu
+#define PPTR_TOP          0xFFFFFFFFFFFFFFFFllu
+//#define PPTR_TOP          0xFFFFFF8FE00000llu
+#endif
+
 #define physMappingOffset (kernelBase - physBase)
 #define BASE_OFFSET       physMappingOffset
-#ifdef CONFIG_ROCKET_CHIP
-#define PPTR_TOP         0xFFFFFFFF8FE00000llu
-#else
-#define PPTR_TOP          0x4FC00000
-#endif
 #define PADDR_TOP         (PPTR_TOP - BASE_OFFSET)
 
 #ifndef __ASSEMBLER__

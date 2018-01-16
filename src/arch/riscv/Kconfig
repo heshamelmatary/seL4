@@ -12,6 +12,14 @@ config HAVE_ARCH_TIMER
     bool
     default y
 
+
+config RISCV_SV48
+    prompt "RISCV Sv48 Paging Mode"
+    bool
+    default n
+    help
+        Choose whether to use Sv39 or Sv48 paging modes.
+
 choice
     prompt "IPC Buffer location"
     default IPC_BUF_IN_RISCV_TP_REGISTER

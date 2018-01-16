@@ -13,7 +13,13 @@ OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
 /* WARNING: constants also defined in plat/machine/hardware.h */
+
+/* #ifndef CONFIG_RISCV_SV48
 KERNEL_BASE   = 0xFFFFFFFF80000000;
+#else
+*/
+KERNEL_BASE   = 0xFFFFFF8000000000;
+/* #endif */
 PHYS_BASE     = 0x0000000080C00000;
 KERNEL_OFFSET = KERNEL_BASE - PHYS_BASE;
 
@@ -31,7 +37,7 @@ SECTIONS
 
 
     ki_boot_end = .;
-    
+
     .text . : AT(ADDR(.text) - KERNEL_OFFSET)
     {
         /* Sit inside a large frame */
@@ -80,7 +86,7 @@ SECTIONS
         _breakpoint_stack_bottom = .;
         . = . + 4K;
         _breakpoint_stack_top = .;
-        
+
         /* large data such as the globals frame and global PD */
         *(.bss.aligned)
         . = . + 8;
