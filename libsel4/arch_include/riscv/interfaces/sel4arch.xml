@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<!--
+  Copyright 2018, Data61
+  Commonwealth Scientific and Industrial Research Organisation (CSIRO)
+  ABN 41 687 119 230.
+
+  This software may be distributed and modified according to the terms of
+  the BSD 2-Clause license. Note that NO WARRANTY is provided.
+  See "LICENSE_BSD2.txt" for details.
+
+     @TAG(DATA61_BSD)
+  -->
+<api>
+	<interface name="seL4_RISCV_PageTable">
+		<method id="RISCVPageTableMap" name="Map">
+			<param dir="in" name="pd" type="seL4_RISCV_PageDirectory"/>
+			<param dir="in" name="vaddr" type="seL4_Word"/>
+			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+		</method>
+        <method id="RISCVPageTableUnmap" name="Unmap">
+        </method>
+	</interface>
+	<interface name="seL4_RISCV_LVL2PageTable">
+		<method id="RISCVLVL2PageTableMap" name="Map">
+			<param dir="in" name="pd" type="seL4_RISCV_PageDirectory"/>
+			<param dir="in" name="vaddr" type="seL4_Word"/>
+			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+		</method>
+        <method id="RISCVLVL2PageTableUnmap" name="Unmap">
+        </method>
+    </interface>
+	<interface name="seL4_RISCV_Page">
+		<method id="RISCVPageMap" name="Map">
+			<param dir="in" name="pd" type="seL4_RISCV_PageDirectory"/>
+			<param dir="in" name="vaddr" type="seL4_Word"/>
+			<param dir="in" name="rights" type="seL4_CapRights_t"/>
+			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
+		</method>
+		<method id="RISCVPageUnmap" name="Unmap"/>
+		<method id="RISCVPageClean_Data" name="Clean_Data">
+		    <param dir="in" name="start_offset" type="seL4_Word"/>
+		    <param dir="in" name="end_offset" type="seL4_Word"/>
+		</method>
+		<method id="RISCVPageGetAddress" name="GetAddress">
+			<param dir="out" name="paddr" type="seL4_Word"/>
+		</method>
+	</interface>
+    <interface name="seL4_RISCV_ASIDControl">
+        <method id="RISCVASIDControlMakePool" name="MakePool">
+            <param dir="in" name="untyped" type="seL4_Untyped"/>
+            <param dir="in" name="root" type="seL4_CNode"/>
+            <param dir="in" name="index" type="seL4_Word"/>
+            <param dir="in" name="depth" type="seL4_Uint8"/>
+        </method>
+    </interface>
+    <interface name="seL4_RISCV_ASIDPool">
+        <method id="RISCVASIDPoolAssign" name="Assign">
+            <param dir="in" name="vroot" type="seL4_CPtr"/>
+        </method>
+    </interface>
+</api>
