@@ -102,7 +102,7 @@ fastpath_call(word_t cptr, word_t msgInfo)
 
 #ifdef CONFIG_ARCH_RISCV
     /* Get HW ASID */
-    stored_hw_asid.words[0] = cap_page_directory_cap_get_capPDMappedASID(newVTable);
+    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 
     /* let gcc optimise this out for 1 domain */
@@ -289,7 +289,7 @@ fastpath_reply_recv(word_t cptr, word_t msgInfo)
 #endif
 
 #ifdef CONFIG_ARCH_RISCV
-    stored_hw_asid.words[0] = cap_page_directory_cap_get_capPDMappedASID(newVTable);
+    stored_hw_asid.words[0] = cap_page_table_cap_get_capPTMappedASID(newVTable);
 #endif
 
     /* Ensure the original caller can be scheduled directly. */
