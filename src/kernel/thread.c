@@ -44,9 +44,9 @@ isBlocked(const tcb_t *thread)
 }
 
 BOOT_CODE void
-configureIdleThread(tcb_t *tcb)
+configureIdleThread(tcb_t *tcb, int affinity)
 {
-    Arch_configureIdleThread(tcb);
+    Arch_configureIdleThread(tcb, affinity);
     setThreadState(tcb, ThreadState_IdleThreadState);
 }
 

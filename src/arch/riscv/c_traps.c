@@ -23,14 +23,11 @@
 /** DONT_TRANSLATE */
 void VISIBLE NORETURN restore_user_context(void)
 {
-    /* TODO: multicore - this is only added for future multicore support
-     * doesn't do anything now
-     */
-    NODE_UNLOCK_IF_HELD;
-
     word_t cur_thread_reg = (word_t) NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers;
 
     c_exit_hook();
+
+    NODE_UNLOCK_IF_HELD;
 
     asm volatile(
         "mv t0, %[cur_thread]       \n"
@@ -93,6 +90,8 @@ void VISIBLE NORETURN restore_user_context(void)
 void VISIBLE NORETURN
 c_handle_interrupt(void)
 {
+    NODE_LOCK_IRQ;
+
     c_entry_hook();
 
     handleInterruptEntry();
@@ -104,6 +103,8 @@ c_handle_interrupt(void)
 void VISIBLE NORETURN
 c_handle_exception(void)
 {
+    NODE_LOCK_SYS;
+
     c_entry_hook();
 
     handle_exception();
@@ -149,7 +150,7 @@ c_handle_syscall(word_t cptr, word_t msgInfo, word_t unused1, word_t unused2, wo
      * and not tested.
      */
 #ifdef TRACK_KERNEL_ENTRIES
-    benchmark_debug_syscall_start(cptr, msgInfo, syscall);
+    //benchmark_debug_syscall_start(cptr, msgInfo, syscall);
     ksKernelEntry.is_fastpath = 1;
 #endif /* TRACK_KERNEL_ENTRIES */
 
