@@ -64,6 +64,12 @@ if(KernelArchARM)
     set(c_common_flags "${c_common_flags} -march=${arm_march}")
     set(asm_common_flags "${asm_common_flags} -Wa,-march=${arm_march}")
 endif()
+if(KernelArchRISCV)
+    set(riscv_march "")
+    set(c_common_flags "-march=rv64ima")
+    set(KernelOptimisation "-O0")
+    set(asm_common_flags "")
+endif()
 set(common_flags "${common_flags} ${build_arch}")
 if(Kernel64)
     set(common_flags "${common_flags} -D__KERNEL_64__")
@@ -117,7 +123,7 @@ set(kernel_common_flags "${kernel_common_flags} -fno-pic -fno-pie")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} ${kernel_common_flags}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${kernel_common_flags} \
     -fno-stack-protector -fno-asynchronous-unwind-tables -std=c99 ${KernelOptimisation} \
-    -Wall -Werror -Wstrict-prototypes -Wmissing-prototypes -Wnested-externs -Wmissing-declarations \
+    -Wall -Wno-error -Wstrict-prototypes -Wmissing-prototypes -Wnested-externs -Wmissing-declarations \
     -Wundef -Wpointer-arith -Wno-nonnull -ffreestanding"
 )
 

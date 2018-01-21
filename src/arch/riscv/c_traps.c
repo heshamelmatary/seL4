@@ -13,6 +13,7 @@
 #include <config.h>
 #include <model/statedata.h>
 #include <arch/kernel/traps.h>
+#include <arch/fastpath/fastpath.h>
 #include <machine/debug.h>
 #include <api/syscall.h>
 #include <util.h>

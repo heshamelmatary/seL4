@@ -10,7 +10,7 @@
 # @TAG(DATA61_GPL)
 #
 
-cmake_minimum_required(VERSION 3.7.2)
+cmake_minimum_required(VERSION 3.5.2)
 
 set(CMAKE_SYSTEM_NAME Generic)
 # For a generic system this is unused, so define it to something that will be
@@ -28,6 +28,8 @@ if("${CROSS_COMPILER_PREFIX}" STREQUAL "")
         endif()
     elseif(AARCH64)
         set(CROSS_COMPILER_PREFIX "aarch64-linux-gnu-" CACHE INTERNAL "")
+    elseif(RISCV)
+        set(CROSS_COMPILER_PREFIX "riscv64-unknown-elf-" CACHE INTERNAL "")
     endif()
 endif()
 
