@@ -31,9 +31,9 @@ typedef seL4_Word seL4_CPtr;
 typedef seL4_CPtr seL4_RISCV_IOSpace;
 typedef seL4_CPtr seL4_RISCV_IOPort;
 typedef seL4_CPtr seL4_RISCV_Page;
-typedef seL4_CPtr seL4_RISCV_PageDirectory;
 typedef seL4_CPtr seL4_RISCV_PageTable;
 typedef seL4_CPtr seL4_RISCV_LVL2PageTable;
+typedef seL4_CPtr seL4_RISCV_LVL1PageTable;
 typedef seL4_CPtr seL4_RISCV_VCPU;
 typedef seL4_CPtr seL4_RISCV_IPI;
 

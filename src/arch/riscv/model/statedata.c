@@ -21,6 +21,4 @@
 /* The top level asid mapping table */
 asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
-pte_t l1pt[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
-pte_t l2pt[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
-pte_t l3pt[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
+pte_t kernel_pageTables[CONFIG_PT_LEVELS][BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));

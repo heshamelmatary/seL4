@@ -49,6 +49,7 @@ $(if $(filter ${PLAT},${PLAT_LIST}),, \
 ifeq (${ARCH}, riscv)
 SEL4_ARCH:=riscv
 TYPE_SUFFIX:=64
+CFLAGS += -mcmodel=medany
 endif
 
 ifeq (${ARCH}, arm)
@@ -85,7 +86,7 @@ endif
 ifeq ($V, 1)
 	BUILD_VERBOSE = 1
 	MAKE_SILENT = -s
-	quiet = 
+	quiet =
 	Q =
 else
 ifeq ($V, 2)
@@ -431,7 +432,7 @@ WARNINGS = all error strict-prototypes missing-prototypes nested-externs \
 	missing-declarations undef pointer-arith no-nonnull
 
 CFLAGS += --std=c99 -nostdlib -nostdinc -ffreestanding \
-	${WARNINGS:%=-W%} ${INCLUDES} -fno-pic
+	${WARNINGS:%=-W%} ${INCLUDES} -fno-pic -mcmodel=medany
 CPPFLAGS += -nostdinc
 LDFLAGS += -nostdlib -nostdinc -static
 LDFLAGS += -Wl,--build-id=none
@@ -481,6 +482,9 @@ CFLAGS += -mgeneral-regs-only
 endif
 ifeq (${SEL4_ARCH}, aarch32)
 CFLAGS += -mfloat-abi=soft
+endif
+ifeq (${SEL4_ARCH}, riscv)
+CFLAGS += -mcmodel=medany
 endif
 
 # Allow overriding of the CFLAGS. Use with caution.
@@ -636,7 +640,7 @@ kernel.o: kernel_final.s
 
 kernel_final.s: kernel_final.c
 	@echo " [CC] $@"
-	$(Q)${CC} ${CFLAGS} -S -o $@ $<
+	$(Q)${CC} ${CFLAGS} -mcmodel=medany -S -o $@ $<
 
 # Awkward rule to get around passing -x to CC and having a .c input file.
 kernel_final.c: kernel_all.c_pp

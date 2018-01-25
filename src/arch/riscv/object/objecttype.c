@@ -158,13 +158,21 @@ Arch_getObjectSize(word_t t)
     switch (t) {
     case seL4_RISCV_4K_Page:
     case seL4_RISCV_PageTableObject:
+#if CONFIG_PT_LEVELS > 2
     case seL4_RISCV_LVL2PageTableObject:
-    case seL4_RISCV_PageDirectoryObject:
+#endif
+    case seL4_RISCV_LVL1PageTableObject:
         return RISCV_4K_PageBits;
-    case seL4_RISCV_2M_Page:
-        return RISCV_2M_PageBits;
-    case seL4_RISCV_1G_Page:
-        return RISCV_1G_PageBits;
+    case seL4_RISCV_Mega_Page:
+        return RISCV_Mega_PageBits;
+#if CONFIG_PT_LEVELS > 2
+    case seL4_RISCV_Giga_Page:
+        return RISCV_Giga_PageBits;
+#endif
+#if CONFIG_PT_LEVELS > 3
+    case seL4_RISCV_Tera_Page:
+        return RISCV_Tera_PageBits;
+#endif
     default:
         fail("Invalid object type");
         return 0;
@@ -177,7 +185,7 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
     switch (t) {
     case seL4_RISCV_4K_Page:
         if (!deviceMemory) {
-            memzero(regionBase, 1 << RISCV_4K_PageBits);
+            memzero(regionBase, BIT(RISCV_4K_PageBits));
         }
 
         return cap_frame_cap_new(
@@ -190,15 +198,15 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                    0                               /* capFMappedAddress    */
                );
 
-    case seL4_RISCV_2M_Page: {
+    case seL4_RISCV_Mega_Page: {
         if (!deviceMemory) {
-            memzero(regionBase, 1 << RISCV_2M_PageBits);
+            memzero(regionBase, BIT(RISCV_Mega_PageBits));
         }
 
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
-                   RISCV_2M_Page,                  /* capFSize             */
+                   RISCV_Mega_Page,                  /* capFSize             */
                    0,                              /* capFTMapype          */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    0,                              /* capFIsDevice         */
@@ -206,24 +214,26 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                );
     }
 
-    case seL4_RISCV_1G_Page: {
+#if CONFIG_PT_LEVELS > 2
+    case seL4_RISCV_Giga_Page: {
         if (!deviceMemory) {
-            memzero(regionBase, 1 << RISCV_1G_PageBits);
+            memzero(regionBase, BIT(RISCV_Giga_PageBits));
         }
 
         return cap_frame_cap_new(
                    asidInvalid,                    /* capFMappedASID       */
                    (word_t) regionBase,            /* capFBasePtr          */
-                   RISCV_1G_Page,                  /* capFSize             */
+                   RISCV_Giga_Page,                  /* capFSize             */
                    0,                              /* capFTMapype          */
                    wordFromVMRights(VMReadWrite),  /* capFVMRights         */
                    0,                              /* capFIsDevice         */
                    0                               /* capFMappedAddress    */
                );
     }
+#endif
 
     case seL4_RISCV_PageTableObject:
-        memzero(regionBase, 1 << RISCV_4K_PageBits);
+        memzero(regionBase, BIT(RISCV_4K_PageBits));
 
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */
@@ -233,8 +243,9 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                    0                       /* capPTMappedAddress */
                );
 
+#if CONFIG_PT_LEVELS > 2
     case seL4_RISCV_LVL2PageTableObject:
-        memzero(regionBase, 1 << RISCV_4K_PageBits);
+        memzero(regionBase, BIT(RISCV_4K_PageBits));
 
         return cap_page_table_cap_new(
                    asidInvalid,            /* capLVL2PTMappedASID    */
@@ -243,9 +254,10 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
                    0,                      /* capLVL2PTIsMapped      */
                    0                       /* capLVL2PTMappedAddress */
                );
+#endif
 
-    case seL4_RISCV_PageDirectoryObject:
-        memzero(regionBase, 1 << RISCV_4K_PageBits);
+    case seL4_RISCV_LVL1PageTableObject:
+        memzero(regionBase, BIT(RISCV_4K_PageBits));
         copyGlobalMappings((pte_t *)regionBase);
 
         return cap_page_table_cap_new(

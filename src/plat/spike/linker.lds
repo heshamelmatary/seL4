@@ -12,9 +12,19 @@ OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
+#include <config.h>
+
+#if CONFIG_PT_LEVELS == 2
+KERNEL_BASE  = 0xFFFFFFFF80000000;
+#elif CONFIG_PT_LEVELS == 3
+KERNEL_BASE  = 0xFFFFFFC000000000;
+#elif CONFIG_PT_LEVELS == 4
+KERNEL_BASE  = 0xFFFF800000000000llu
+#endif
+
 /* WARNING: constants also defined in plat/machine/hardware.h */
-KERNEL_BASE   = 0xFFFFFFFF80000000;
-PHYS_BASE     = 0x0000000080C00000;
+/* KERNEL_BASE   = 0xFFFFFFC000000000; */
+PHYS_BASE     = 0x00000000C0000000;
 KERNEL_OFFSET = KERNEL_BASE - PHYS_BASE;
 
 SECTIONS
@@ -31,7 +41,7 @@ SECTIONS
 
 
     ki_boot_end = .;
-    
+
     .text . : AT(ADDR(.text) - KERNEL_OFFSET)
     {
         /* Sit inside a large frame */
@@ -80,7 +90,7 @@ SECTIONS
         _breakpoint_stack_bottom = .;
         . = . + 4K;
         _breakpoint_stack_top = .;
-        
+
         /* large data such as the globals frame and global PD */
         *(.bss.aligned)
         . = . + 8;

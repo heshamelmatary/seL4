@@ -13,7 +13,7 @@
 <api>
 	<interface name="seL4_RISCV_PageTable">
 		<method id="RISCVPageTableMap" name="Map">
-			<param dir="in" name="pd" type="seL4_RISCV_PageDirectory"/>
+			<param dir="in" name="pd" type="seL4_RISCV_LVL1PageTable"/>
 			<param dir="in" name="vaddr" type="seL4_Word"/>
 			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
 		</method>
@@ -22,7 +22,7 @@
 	</interface>
 	<interface name="seL4_RISCV_LVL2PageTable">
 		<method id="RISCVLVL2PageTableMap" name="Map">
-			<param dir="in" name="pd" type="seL4_RISCV_PageDirectory"/>
+			<param dir="in" name="pd" type="seL4_RISCV_LVL1PageTable"/>
 			<param dir="in" name="vaddr" type="seL4_Word"/>
 			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
 		</method>
@@ -31,7 +31,7 @@
     </interface>
 	<interface name="seL4_RISCV_Page">
 		<method id="RISCVPageMap" name="Map">
-			<param dir="in" name="pd" type="seL4_RISCV_PageDirectory"/>
+			<param dir="in" name="pd" type="seL4_RISCV_LVL1PageTable"/>
 			<param dir="in" name="vaddr" type="seL4_Word"/>
 			<param dir="in" name="rights" type="seL4_CapRights_t"/>
 			<param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>

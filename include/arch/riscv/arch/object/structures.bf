@@ -111,9 +111,17 @@ block vm_attributes {
 
 -- RISC-V PTE format (priv-1.10) requires MSBs after PPN to be reserved 0s
 
+#if CONFIG_PT_LEVELS == 2
+base 32(32,1)
+#endif
+
 block pte {
+#if CONFIG_PT_LEVELS == 2
+    field ppn              22
+#else
     padding                10
     field ppn              44
+#endif
     field sw               2
     field dirty            1
     field accessed         1
@@ -129,10 +137,19 @@ block pte {
 -- This register was originally named sptbr and some toolchains still use
 -- sptbr when it refers to satp.
 
+#if CONFIG_PT_LEVELS == 2 && __riscv_xlen == 32
+block satp {
+    field mode          1
+    field asid          9
+    field ppn           22
+}
+#else
+base 64(48,1)
 block satp {
     field mode          4
     field asid          16
     field ppn           44
 }
+#endif
 
 #include <arch/api/shared_types.bf>

@@ -16,11 +16,21 @@
 typedef enum _object {
     /* RISC-V's Sv39 paging mode */
     seL4_RISCV_4K_Page = seL4_NonArchObjectTypeCount,
-    seL4_RISCV_2M_Page,
-    seL4_RISCV_1G_Page,
+    seL4_RISCV_Mega_Page, /* 4MiB on Sv32, 2MiB on Sv39/Sv48 */
+#if CONFIG_PT_LEVELS > 2
+    seL4_RISCV_Giga_Page,
+#endif
+#if CONFIG_PT_LEVELS > 3
+    seL4_RISCV_Tera_Page,
+#endif
     seL4_RISCV_PageTableObject,
+#if CONFIG_PT_LEVELS > 2
     seL4_RISCV_LVL2PageTableObject,
-    seL4_RISCV_PageDirectoryObject,
+#endif
+#if CONFIG_PT_LEVELS > 3
+    seL4_RISCV_LVL3PageTableObject,
+#endif
+    seL4_RISCV_LVL1PageTableObject,
     seL4_ObjectTypeCount
 } seL4_ArchObjectType;
 

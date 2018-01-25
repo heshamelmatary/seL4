@@ -17,7 +17,11 @@
 #include <assert.h>
 #include <stdint.h>
 
+#if __riscv_xlen == 64
 compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
+#else
+compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
+#endif
 
 typedef unsigned long word_t;
 typedef signed long  sword_t;

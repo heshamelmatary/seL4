@@ -71,7 +71,12 @@ typedef pte_t pde_t;
 #define PTE_SIZE_BITS   seL4_PageTableEntryBits
 #define PT_INDEX_BITS   seL4_PageTableIndexBits
 
+#if __riscv_xlen == 64
 #define WORD_SIZE_BITS 3
+#else
+#define WORD_SIZE_BITS 2
+#endif
+
 #define WORD_BITS   (8 * sizeof(word_t))
 #define WORD_PTR(r) ((word_t *)(r))
 

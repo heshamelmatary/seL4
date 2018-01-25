@@ -15,7 +15,12 @@
 
 #include <autoconf.h>
 
+#if __riscv_xlen == 64
 #define seL4_WordBits           64
+#else
+#define seL4_WordBits           32
+#endif
+
 #define seL4_PageBits           12
 #define seL4_SlotBits           5
 #define seL4_TCBBits            11
@@ -23,11 +28,21 @@
 #define seL4_NotificationBits   5
 
 #define seL4_PageTableBits      12
+#if CONFIG_PT_LEVELS == 2
+#define seL4_PageTableEntryBits 2
+#define seL4_PageTableIndexBits 10
+#define seL4_LargePageBits      22
+#elif CONFIG_PT_LEVELS == 3 || CONFIG_PT_LEVELS == 4
 #define seL4_PageTableEntryBits 3
 #define seL4_PageTableIndexBits 9
-
 #define seL4_LargePageBits      21
 #define seL4_HugePageBits       30
+#endif
+
+#if CONFIG_PT_LEVELS == 4
+#define seL4_TeraPageBits       39
+#endif
+
 #define seL4_ASIDPoolIndexBits  10
 #define seL4_ASIDPoolBits       12
 

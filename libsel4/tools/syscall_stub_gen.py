@@ -333,7 +333,7 @@ def init_arch_types(wordsize):
             CapType("seL4_RISCV_Page", wordsize),
             CapType("seL4_RISCV_PageTable", wordsize),
             CapType("seL4_RISCV_LVL2PageTable", wordsize),
-            CapType("seL4_RISCV_PageDirectory", wordsize),
+            CapType("seL4_RISCV_LVL1PageTable", wordsize),
             CapType("seL4_RISCV_ASIDControl", wordsize),
             CapType("seL4_RISCV_ASIDPool", wordsize),
             StructType("seL4_UserContext", wordsize * 17, wordsize),

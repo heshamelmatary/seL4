@@ -49,12 +49,20 @@ static inline void clearMemory(void* ptr, unsigned int bits)
     memzero(ptr, BIT(bits));
 }
 
+#if CONFIG_PT_LEVELS == 2
+#define SATP_MODE SPTBR_MODE_SV32
+#elif CONFIG_PT_LEVELS == 3
+#define SATP_MODE SPTBR_MODE_SV39
+#elif CONFIG_PT_LEVELS == 4
+#define SATP_MODE SPTBR_MODE_SV48
+#else
+#error "Unsupported PT levels"
+#endif
 static inline void setVSpaceRoot(paddr_t addr, asid_t asid)
 {
-    satp_t satp = satp_new(SPTBR_MODE_SV39,              /* mode */
+    satp_t satp = satp_new(SATP_MODE,              /* mode */
                            asid,                         /* asid */
                            (addr >> RISCV_4K_PageBits)); /* PPN */
-
 
     /* Current toolchain still uses sptbr register name although it got renamed in priv-1.10.
      * This will most likely need to change with newer toolchains

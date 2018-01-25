@@ -68,7 +68,7 @@ create_mapped_it_frame_cap(cap_t pd_cap, pptr_t pptr, vptr_t vptr, asid_t asid, 
     vm_page_size_t frame_size;
 
     if (use_large) {
-        frame_size = RISCV_2M_Page;
+        frame_size = RISCV_Mega_Page;
     } else {
         frame_size = RISCV_4K_Page;
     }
@@ -224,7 +224,7 @@ BOOT_CODE static void
 init_plat(void)
 {
     initIRQController();
-    initTimer();
+    //initTimer();
 }
 
 #if CONFIG_MAX_NUM_NODES > 1
@@ -278,8 +278,7 @@ try_init_kernel(
     paddr_t ui_p_reg_start,
     paddr_t ui_p_reg_end,
     uint32_t pv_offset,
-    vptr_t  v_entry,
-    uint64_t sbi_pt
+    vptr_t  v_entry
 )
 {
     cap_t root_cnode_cap;
@@ -307,7 +306,7 @@ try_init_kernel(
     it_v_reg.start = ui_v_reg.start;
     it_v_reg.end = bi_frame_vptr + BIT(PAGE_BITS);
 
-    map_kernel_window(sbi_pt);
+    map_kernel_window();
 
     /* initialise the CPU */
     init_cpu();
@@ -465,8 +464,7 @@ init_kernel(
     result = try_init_kernel(ui_p_reg_start,
                              ui_p_reg_end,
                              pv_offset,
-                             v_entry,
-                             0
+                             v_entry
                             );
 #endif
     if (!result) {

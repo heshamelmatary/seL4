@@ -29,9 +29,8 @@ NODE_STATE_END(archNodeState);
 
 extern asid_pool_t *riscvKSASIDTable[BIT(asidHighBits)];
 
-/* RISC-V has 3-level page tables, each of which is 4KiB, PTEs are of word_t size */
-extern pte_t l1pt[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
-extern pte_t l2pt[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
-extern pte_t l3pt[BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
-
+/* RISC-V has n-level page tables (depending on configured paging mode),
+ * each of which is 4KiB, PTEs are of word_t size
+  */
+extern pte_t kernel_pageTables[CONFIG_PT_LEVELS][BIT(PT_INDEX_BITS)] ALIGN(BIT(seL4_PageTableBits));
 #endif

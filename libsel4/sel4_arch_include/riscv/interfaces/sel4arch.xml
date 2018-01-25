@@ -31,13 +31,13 @@
 		<member name="a6"/>
     </struct>
 
-  <interface name="seL4_RISCV_PageDirectory">
-	    <method id="RISCVPageDirectoryMap" name="Map">
-	        <param dir="in" name="pdpt" type="seL4_RISCV_PageDirectory"/>
+  <interface name="seL4_RISCV_LVL1PageTable">
+	    <method id="RISCVLVL1PageTableMap" name="Map">
+	        <param dir="in" name="pdpt" type="seL4_RISCV_LVL1PageTable"/>
 	        <param dir="in" name="vaddr" type="seL4_Word"/>
 	        <param dir="in" name="attr" type="seL4_RISCV_VMAttributes"/>
 	    </method>
-	    <method id="RISCVPageDirectoryUnmap" name="Unmap">
+	    <method id="RISCVLVL1PageTableUnmap" name="Unmap">
 	    </method>
 	</interface>
 

@@ -57,116 +57,71 @@ RISCVGetUserFromVMRights(vm_rights_t vm_rights)
 BOOT_CODE void
 map_kernel_frame(paddr_t paddr, pptr_t vaddr, vm_rights_t vm_rights)
 {
-    uint32_t idx = SV39_GET_LVL3_PT_INDEX(vaddr);
+    /* This maps a 4KiB page on the corresponding PT level (depending on the
+     * configured PT level
+     */
+    uint32_t idx = RISCV_GET_PT_INDEX(vaddr, RISCVpageAtPTLevel(RISCV_4K_Page));
 
     /* vaddr lies in the region the global PT covers */
     assert(vaddr >= PPTR_TOP);
-    l3pt[idx] =    pte_new(
-                       paddr >> RISCV_4K_PageBits,
-                       0,  /* sw */
-                       1,  /* dirty */
-                       1,  /* accessed */
-                       1,  /* global */
-                       0,  /* user */
-                       1,  /* execute */
-                       1,  /* write */
-                       1,  /* read */
-                       1   /* valid */
-                   );
+
+    /* array starts at index 0, so (level - 1) to index */
+    kernel_pageTables[RISCVpageAtPTLevel(RISCV_4K_Page) - 1][idx] =    pte_new(
+                                                                           paddr >> RISCV_4K_PageBits,
+                                                                           0,  /* sw */
+                                                                           1,  /* dirty */
+                                                                           1,  /* accessed */
+                                                                           1,  /* global */
+                                                                           0,  /* user */
+                                                                           1,  /* execute */
+                                                                           1,  /* write */
+                                                                           1,  /* read */
+                                                                           1   /* valid */
+                                                                       );
 }
 
 BOOT_CODE VISIBLE void
-map_kernel_window(uint64_t sbi_pt)
+map_kernel_window(void)
 {
-    uint64_t  i, pt_index;
-    uint32_t temp;
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
-    /* up to end of virtual address space minus 4MB */
 
-    /* Note, this assumes the kernel is mapped to 0xFFFFFFFF80000000 */
-    /* 256 MiB kernel mapping (128 PTE * 2MiB per entry) */
-    l1pt[SV39_GET_LVL1_PT_INDEX(kernelBase)] =  pte_new(
-                                                    (addrFromPPtr(l2pt) >> RISCV_4K_PageBits),
-                                                    0,  /* sw */
-                                                    1,  /* dirty */
-                                                    1,  /* accessed */
-                                                    1,  /* global */
-                                                    0,  /* user */
-                                                    0,  /* execute */
-                                                    0,  /* write */
-                                                    0,  /* read */
-                                                    1   /* valid */
-                                                );
+    /* Calculate the number of PTEs to map the kernel in the first level PT */
+    int num_lvl1_entries = ROUND_UP((BIT(CONFIG_KERNEL_WINDOW_SIZE_BIT) / RISCV_GET_LVL_PGSIZE(1)), 1);
 
-    /* Map the kernel with 2M pages */
-    for (i = 0, pt_index = 0; i < BIT(RISCV_2M_PageBits) * 127; i += BIT(RISCV_2M_PageBits), pt_index++) {
-        /* The first two bits are always 0b11 since the MSB is 0xF */
-        l2pt[pt_index] = pte_new(
-                             (physBase + i) >> RISCV_4K_PageBits,
-                             0,  /* sw */
-                             1,  /* dirty */
-                             1,  /* accessed */
-                             1,  /* global */
-                             0,  /* user */
-                             1,  /* execute */
-                             1,  /* write */
-                             1,  /* read */
-                             1 /* valid */
-                         );
+    for (int i = 0; i < num_lvl1_entries; i++) {
+        kernel_pageTables[0][RISCV_GET_PT_INDEX(kernelBase, 1) + i] =  pte_new(
+                                                                           /* physical address has to be strictly aligned to the correponding page size */
+                                                                           ((physBase) >> RISCV_4K_PageBits),
+                                                                           0,  /* sw */
+                                                                           1,  /* dirty */
+                                                                           1,  /* accessed */
+                                                                           1,  /* global */
+                                                                           0,  /* user */
+                                                                           1,  /* execute */
+                                                                           1,  /* write */
+                                                                           1,  /* read */
+                                                                           1   /* valid */
+                                                                       );
     }
 
-    assert((physBase + i) == PADDR_TOP);
-
-    /* Map last 2MiB Page to page tables - */
-    l2pt[127] =  pte_new(
-                     (addrFromPPtr(l3pt) >> RISCV_4K_PageBits),
-                     0,  /* sw */
-                     1,  /* dirty */
-                     1,  /* accessed */
-                     1,  /* global */
-                     0,  /* user */
-                     0,  /* execute */
-                     0,  /* write */
-                     0,  /* read */
-                     1 /* valid */
-                 );
-
-    /* now start initialising the page table */
-    memzero(l3pt, BIT(RISCV_4K_PageBits));
-
-    setVSpaceRoot(addrFromPPtr(l1pt), 0);
+    setVSpaceRoot(addrFromPPtr(kernel_pageTables[0]), 0);
 }
 
 BOOT_CODE void
-map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap)
+map_it_pt_cap(cap_t vspace_cap, cap_t pt_cap, uint32_t ptLevel)
 {
-    uint32_t ptLevel = cap_page_table_cap_get_capLevel(pt_cap);
+    lookupPTSlot_ret_t pt_ret;
     pte_t* targetSlot;
-
     vptr_t vptr = cap_page_table_cap_get_capPTMappedAddress(pt_cap);
     pte_t* lvl1pt = PTE_PTR(pptr_of_cap(vspace_cap));
-    uint32_t lvl1ptIndex = SV39_GET_LVL1_PT_INDEX(vptr);
 
     /* lvl[ptLevel]pt to be mapped */
     pte_t* pt   = PTE_PTR(pptr_of_cap(pt_cap));
 
-    /* targetSlot depends on ptLevel */
-    switch (ptLevel) {
-    case 2:
-        targetSlot = lvl1pt + lvl1ptIndex;
-        break;
-    case 3: {
-        pte_t* lvl2pt = ptrFromPAddr(((*((uint64_t *)(lvl1pt + lvl1ptIndex)) >> 10) << RISCV_4K_PageBits));
-        uint32_t lvl2ptIndex = SV39_GET_LVL2_PT_INDEX(vptr);
-        targetSlot = lvl2pt + lvl2ptIndex;
-    }
-    break;
-    /* Add another level 4 when Sv48 is supported */
-    case 1: /* Only lvl > 1 page tables are allowed here, expecting vspace_cap is lvl1 */
-    default:
-        fail("Invalid PT level");
+    /* Get PT[ptLevel - 1] slot to install the address of ptLevel in */
+    pt_ret = lookupPTSlot(lvl1pt, vptr, ptLevel - 1);
 
-    }
+    targetSlot = pt_ret.ptSlot;
 
     *targetSlot = pte_new(
                       (addrFromPPtr(pt) >> RISCV_4K_PageBits),
@@ -189,14 +144,11 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
     pte_t* lvl1pt   = PTE_PTR(pptr_of_cap(vspace_cap));
     pte_t* frame_pptr   = PTE_PTR(pptr_of_cap(frame_cap));
     vptr_t frame_vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
-    uint32_t lvl1ptIndex = SV39_GET_LVL1_PT_INDEX(frame_vptr);
-    uint32_t lvl2ptIndex = SV39_GET_LVL2_PT_INDEX(frame_vptr);
-    uint32_t lvl3ptIndex = SV39_GET_LVL3_PT_INDEX(frame_vptr);
 
-    pte_t* lvl2pt = ptrFromPAddr((*((uint64_t *)(lvl1pt + lvl1ptIndex)) >> 10) << RISCV_4K_PageBits);
-    pte_t* lvl3pt = ptrFromPAddr(((*((uint64_t *)(lvl2pt + lvl2ptIndex)) >> 10) << RISCV_4K_PageBits));
+    /* We deal with a frame as 4KiB */
+    lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, frame_vptr, RISCVpageAtPTLevel(RISCV_4K_Page));
 
-    pte_t* targetSlot = lvl3pt + lvl3ptIndex;
+    pte_t* targetSlot = lu_ret.ptSlot;
 
     *targetSlot = pte_new(
                       (pptr_to_paddr(frame_pptr) >> RISCV_4K_PageBits),
@@ -209,36 +161,6 @@ map_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
                       1,  /* write */
                       1,  /* read */
                       1   /* valid */
-                  );
-    asm volatile ("sfence.vma");
-}
-
-BOOT_CODE void
-unmap_it_frame_cap(cap_t vspace_cap, cap_t frame_cap)
-{
-    pte_t* lvl1pt   = PTE_PTR(pptr_of_cap(vspace_cap));
-    pte_t* frame_pptr   = PTE_PTR(pptr_of_cap(frame_cap));
-    vptr_t frame_vptr = cap_frame_cap_get_capFMappedAddress(frame_cap);
-    uint32_t lvl1ptIndex = SV39_GET_LVL1_PT_INDEX(frame_vptr);
-    uint32_t lvl2ptIndex = SV39_GET_LVL2_PT_INDEX(frame_vptr);
-    uint32_t lvl3ptIndex = SV39_GET_LVL3_PT_INDEX(frame_vptr);
-
-    pte_t* lvl2pt = ptrFromPAddr((*((uint64_t *)(lvl1pt + lvl1ptIndex)) >> 10) << RISCV_4K_PageBits);
-    pte_t* lvl3pt = ptrFromPAddr(((*((uint64_t *)(lvl2pt + lvl2ptIndex)) >> 10) << RISCV_4K_PageBits));
-
-    pte_t* targetSlot = lvl3pt + lvl3ptIndex;
-
-    *targetSlot = pte_new(
-                      (pptr_to_paddr(frame_pptr) >> RISCV_4K_PageBits),
-                      0, /* sw */
-                      0, /* dirty */
-                      0, /* accessed */
-                      0,  /* global */
-                      0,  /* user */
-                      0,  /* execute */
-                      0,  /* write */
-                      0,  /* read */
-                      0 /* valid */
                   );
     asm volatile ("sfence.vma");
 }
@@ -272,7 +194,7 @@ create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, uint32
               vptr    /* capPTMappedAddress   */
           );
 
-    map_it_pt_cap(vspace_cap, cap);
+    map_it_pt_cap(vspace_cap, cap, ptLevel);
     return cap;
 }
 
@@ -309,46 +231,29 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 
     write_slot(SLOT_PTR(pptr_of_cap(root_cnode_cap), seL4_CapInitThreadVSpace), lvl1pt_cap);
 
-    /* create all 2nd level PT objs and caps necessary to cover userland image */
+    /* create all n level PT objs and caps necessary to cover userland image in 4KiB pages */
     slot_pos_before = ndks_boot.slot_pos_cur;
 
-    for (pt_vptr = ROUND_DOWN(it_v_reg.start, RISCV_1G_PageBits);
-            pt_vptr < it_v_reg.end;
-            pt_vptr += BIT(RISCV_1G_PageBits)) {
-        pt_pptr = alloc_region(PT_SIZE_BITS);
+    for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
 
-        if (!pt_pptr) {
-            return cap_null_cap_new();
+        for (pt_vptr = ROUND_DOWN(it_v_reg.start, RISCV_GET_LVL_PGSIZE_BITS(i - 1));
+                pt_vptr < it_v_reg.end;
+                pt_vptr += RISCV_GET_LVL_PGSIZE(i - 1)) {
+            pt_pptr = alloc_region(PT_SIZE_BITS);
+
+            if (!pt_pptr) {
+                return cap_null_cap_new();
+            }
+
+            memzero(PTE_PTR(pt_pptr), 1 << PT_SIZE_BITS);
+            if (!provide_cap(root_cnode_cap,
+                             create_it_pt_cap(lvl1pt_cap, pt_pptr, pt_vptr, IT_ASID, i))
+               ) {
+                return cap_null_cap_new();
+            }
         }
 
-        memzero(PTE_PTR(pt_pptr), 1 << PT_SIZE_BITS);
-        if (!provide_cap(root_cnode_cap,
-                         create_it_pt_cap(lvl1pt_cap, pt_pptr, pt_vptr, IT_ASID, 2))
-           ) {
-            return cap_null_cap_new();
-        }
     }
-
-    /* Create any 3rd level PTs needed for the user land image */
-    for (pt_vptr = ROUND_DOWN(it_v_reg.start, RISCV_2M_PageBits);
-            pt_vptr < it_v_reg.end;
-            pt_vptr += BIT(RISCV_2M_PageBits)) {
-        pt_pptr = alloc_region(PT_SIZE_BITS);
-        if (!pt_pptr) {
-            return cap_null_cap_new();
-        }
-        memzero(PT_PTR(pt_pptr), 1 << PT_SIZE_BITS);
-        if (!provide_cap(root_cnode_cap,
-                         create_it_pt_cap(lvl1pt_cap, pt_pptr, pt_vptr, IT_ASID, 3))
-           ) {
-            return cap_null_cap_new();
-        }
-    }
-
-    slot_pos_after = ndks_boot.slot_pos_cur;
-    ndks_boot.bi_frame->userImagePaging = (seL4_SlotRegion) {
-        slot_pos_before, slot_pos_after
-    };
 
     setVSpaceRoot(addrFromPPtr( (void *) lvl1pt_pptr), IT_ASID);
     return lvl1pt_cap;
@@ -357,7 +262,7 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 BOOT_CODE void
 activate_kernel_vspace(void)
 {
-    setVSpaceRoot(addrFromPPtr(l1pt), 0);
+    setVSpaceRoot(addrFromPPtr(kernel_pageTables[0]), 0);
 }
 
 BOOT_CODE void
@@ -422,9 +327,9 @@ void
 copyGlobalMappings(pte_t *newLvl1pt)
 {
     unsigned int i;
-    pte_t *global_kernel_vspace = l1pt;
+    pte_t *global_kernel_vspace = kernel_pageTables[0];
 
-    for (i = SV39_GET_LVL1_PT_INDEX(kernelBase); i < 512; i++) {
+    for (i = RISCV_GET_PT_INDEX(kernelBase, 1); i < BIT(PT_INDEX_BITS); i++) {
         newLvl1pt[i] = global_kernel_vspace[i];
     }
 }
@@ -463,10 +368,9 @@ lookupPTSlot_ret_t
 lookupPTSlot(pte_t *lvl1pt, vptr_t vptr, uint32_t ptLevel)
 {
     lookupPTSlot_ret_t ret;
+    pte_t* pt;
 
-    uint32_t lvl1ptIndex = SV39_GET_LVL1_PT_INDEX(vptr);
-    uint32_t lvl2ptIndex = SV39_GET_LVL2_PT_INDEX(vptr);
-    uint32_t lvl3ptIndex = SV39_GET_LVL3_PT_INDEX(vptr);
+    assert(ptLevel <= CONFIG_PT_LEVELS);
 
     /* Is lvl1pt valid? */
     if (lvl1pt == 0) {
@@ -474,40 +378,22 @@ lookupPTSlot(pte_t *lvl1pt, vptr_t vptr, uint32_t ptLevel)
         ret.status = EXCEPTION_LOOKUP_FAULT;
         return ret;
     } else {
-        ret.ptSlot = lvl1pt + lvl1ptIndex;
+        ret.ptSlot = lvl1pt + RISCV_GET_PT_INDEX(vptr, 1);
+    }
 
-        if (ptLevel == 1) {
-            ret.status = EXCEPTION_NONE;
+    for (int i = 2; i <= ptLevel; i++) {
+        if (ret.ptSlot->words[0] == 0) {
+            current_lookup_fault = lookup_fault_missing_capability_new(RISCV_GET_LVL_PGSIZE_BITS(i - 1));
+            ret.status = EXCEPTION_LOOKUP_FAULT;
             return ret;
+        } else {
+            pt = ptrFromPAddr((ret.ptSlot->words[0] >> 10) << RISCV_4K_PageBits);
+            ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
         }
     }
 
-    if (*((uint64_t *)ret.ptSlot) == 0) {
-        userError("lvl2pt is invalid");
-        current_lookup_fault = lookup_fault_missing_capability_new(30);
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    } else {
-        pte_t* lvl2pt = ptrFromPAddr(((*((uint64_t *)(ret.ptSlot)) >> 10) << RISCV_4K_PageBits));
-        ret.ptSlot = lvl2pt + lvl2ptIndex;
-
-        if (ptLevel == 2) {
-            ret.status = EXCEPTION_NONE;
-            return ret;
-        }
-    }
-
-    if (*((uint64_t *)ret.ptSlot) == 0) {
-        userError("lvl3pt is invalid");
-        current_lookup_fault = lookup_fault_missing_capability_new(21);
-        ret.status = EXCEPTION_LOOKUP_FAULT;
-        return ret;
-    } else {
-        pte_t* lvl3pt = ptrFromPAddr(((*((uint64_t *)(ret.ptSlot)) >> 10) << RISCV_4K_PageBits));
-        ret.ptSlot = lvl3pt + lvl3ptIndex;
-        ret.status = EXCEPTION_NONE;
-        return ret;
-    }
+    ret.status = EXCEPTION_NONE;
+    return ret;
 }
 
 exception_t
@@ -679,25 +565,13 @@ unmapPage(vm_page_size_t page_size, asid_t asid, vptr_t vptr, pptr_t pptr)
         return;
     }
 
-    if (page_size == RISCV_4K_Page) {
-        paddr_t addr = addrFromPPtr((void *) pptr);
-
-        lu_ret = lookupPTSlot(find_ret.vspace_root, vptr, 3);
-        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            return;
-        }
-
-        *((uint64_t *)lu_ret.ptSlot) = 0;
-    } else if (page_size == RISCV_2M_Page) {
-
-        lu_ret = lookupPTSlot(find_ret.vspace_root, vptr, 2);
-        *((uint64_t *) lu_ret.ptSlot) = 0;
-    } else if (page_size == RISCV_1G_Page) {
-        lookupPTSlot_ret_t lu_ret;
-
-        lu_ret = lookupPTSlot(find_ret.vspace_root, vptr, 1);
-        *((uint64_t *) lu_ret.ptSlot) = 0;
+    lu_ret = lookupPTSlot(find_ret.vspace_root, vptr, RISCVpageAtPTLevel(page_size));
+    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+        return;
     }
+
+    lu_ret.ptSlot->words[0] = 0;
+
     asm volatile ("sfence.vma");
 }
 
@@ -713,7 +587,7 @@ setVMRoot(tcb_t *tcb)
 
     if (cap_get_capType(threadRoot) != cap_page_table_cap ||
             cap_page_table_cap_get_capLevel(threadRoot) != 1 ) {
-        setVSpaceRoot(addrFromPPtr(l1pt), 0);
+        setVSpaceRoot(addrFromPPtr(kernel_pageTables[0]), 0);
         return;
     }
 
@@ -722,7 +596,7 @@ setVMRoot(tcb_t *tcb)
     asid = cap_page_table_cap_get_capPTMappedASID(threadRoot);
     find_ret = findVSpaceForASID(asid);
     if (unlikely(find_ret.status != EXCEPTION_NONE || find_ret.vspace_root != lvl1pt)) {
-        setVSpaceRoot(addrFromPPtr(l1pt), asid);
+        setVSpaceRoot(addrFromPPtr(kernel_pageTables[0]), asid);
         return;
     }
 
@@ -778,32 +652,20 @@ maskVMRights(vm_rights_t vm_rights, seL4_CapRights_t cap_rights_mask)
 /* The rest of the file implements the RISCV object invocations */
 
 static pte_t CONST
-makeUserPTE(vm_page_size_t page_size, paddr_t paddr, vm_rights_t vm_rights)
+makeUserPTE(paddr_t paddr, vm_rights_t vm_rights)
 {
-    pte_t pte;
-
-    switch (page_size) {
-    case RISCV_4K_Page:
-    case RISCV_2M_Page:
-    case RISCV_1G_Page:
-
-        pte = pte_new(
-                  paddr >> RISCV_4K_PageBits,
-                  0, /* sw */
-                  1, /* dirty */
-                  1, /* accessed */
-                  0, /* global */
-                  RISCVGetUserFromVMRights(vm_rights),   /* user */
-                  1, /* execute */
-                  RISCVGetWriteFromVMRights(vm_rights),  /* write */
-                  1, /* read */
-                  1 /* valid */
-              );
-        break;
-    default:
-        fail("Invalid PTE frame type");
-    }
-    return pte;
+    return pte_new(
+               paddr >> RISCV_4K_PageBits,
+               0, /* sw */
+               1, /* dirty */
+               1, /* accessed */
+               0, /* global */
+               RISCVGetUserFromVMRights(vm_rights),   /* user */
+               1, /* execute */
+               RISCVGetWriteFromVMRights(vm_rights),  /* write */
+               1, /* read */
+               1 /* valid */
+           );
 }
 
 static inline bool_t CONST
@@ -815,7 +677,7 @@ checkVPAlignment(vm_page_size_t sz, word_t w)
 static exception_t
 decodeRISCVPageTableInvocation(word_t label, unsigned int length,
                                cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                               word_t *buffer, uint32_t level)
+                               word_t *buffer, uint32_t ptLevel)
 {
     word_t vaddr, lvl1ptIndex;
     vm_attributes_t attr;
@@ -826,14 +688,13 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     lookupPTSlot_ret_t lu_ret;
     asid_t          asid;
 
-    /* On RISC-V 64-bit, we only support 3 level page tables */
-    if (level < 1 || level > 3) {
+    if (ptLevel > CONFIG_PT_LEVELS) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    /* No invocations at level 1 page table (aka page directory) are supported */
-    if (level == 1) {
+    /* No invocations at level 1 page table (aka page directory) are not supported */
+    if (ptLevel == 1) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -907,8 +768,8 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         }
     }
 
-    /* Check if there's a "level - 1" PT to map "level" PT in */
-    lu_ret = lookupPTSlot(lvl1pt, vaddr, level - 1);
+    /* Check if there's a "ptLevel - 1" PT to map "ptLevel" PT in */
+    lu_ret = lookupPTSlot(lvl1pt, vaddr, ptLevel - 1);
 
     if (lu_ret.status != EXCEPTION_NONE) {
         current_syscall_error.type = seL4_FailedLookup;
@@ -919,7 +780,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
 
     ptSlot = lu_ret.ptSlot;
 
-    if (unlikely( *((uint64_t *) ptSlot) != 0) ) {
+    if (unlikely(ptSlot->words[0] != 0) ) {
         current_syscall_error.type = seL4_DeleteFirst;
         return EXCEPTION_SYSCALL_ERROR;
     }
@@ -940,7 +801,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
               1 /* valid */
           );
 
-    cap = cap_page_table_cap_set_capLevel(cap, level);
+    cap = cap_page_table_cap_set_capLevel(cap, ptLevel);
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
@@ -964,67 +825,27 @@ createSafeMappingEntries_PTE
     create_mappings_pte_return_t ret;
     lookupPTSlot_ret_t lu_ret;
 
-    unsigned int i;
+    ret.pte_entries.base = 0;
+    ret.pte_entries.length = 1;
 
-    switch (frameSize) {
+    ret.pte = makeUserPTE(base, vmRights);
 
-    case RISCV_4K_Page: {
-
-        ret.pte_entries.base = 0;
-        ret.pte_entries.length = 1;
-
-        ret.pte = makeUserPTE(RISCV_4K_Page, base, vmRights);
-
-        lu_ret = lookupPTSlot(lvl1pt, vaddr, 3);
-        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-            current_syscall_error.type =
-                seL4_FailedLookup;
-            current_syscall_error.failedLookupWasSource =
-                false;
-            ret.status = EXCEPTION_SYSCALL_ERROR;
-            /* current_lookup_fault will have been set by
-             * lookupPTSlot */
-            return ret;
-        }
-
-        ret.pte_entries.base = lu_ret.ptSlot;
-
-        ret.status = EXCEPTION_NONE;
-        return ret;
-
-    }
-
-    case RISCV_2M_Page: {
-        ret.pte_entries.base = 0;
-        ret.pte_entries.length = 1;
-
-        ret.pte = makeUserPTE(RISCV_2M_Page, base, vmRights);
-
-        lu_ret = lookupPTSlot(lvl1pt, vaddr, 2);
-
-        ret.pte_entries.base = lu_ret.ptSlot;
-
-        ret.status = EXCEPTION_NONE;
+    lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
+    if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+        current_syscall_error.type =
+            seL4_FailedLookup;
+        current_syscall_error.failedLookupWasSource =
+            false;
+        ret.status = EXCEPTION_SYSCALL_ERROR;
+        /* current_lookup_fault will have been set by
+         * lookupPTSlot */
         return ret;
     }
 
-    case RISCV_1G_Page: {
-        ret.pte_entries.base = 0;
-        ret.pte_entries.length = 1;
+    ret.pte_entries.base = lu_ret.ptSlot;
 
-        ret.pte = makeUserPTE(RISCV_1G_Page, base, vmRights);
-
-        lu_ret = lookupPTSlot(lvl1pt, vaddr, 1);
-
-        ret.pte_entries.base = lu_ret.ptSlot;
-
-        ret.status = EXCEPTION_NONE;
-        return ret;
-    }
-    default:
-        fail("Invalid or unexpected RISCV page type.");
-
-    }
+    ret.status = EXCEPTION_NONE;
+    return ret;
 }
 
 static exception_t
@@ -1092,38 +913,14 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         lookupPTSlot_ret_t lu_ret;
 
         /* Check if this page is already mapped */
-        if (frameSize == RISCV_4K_Page) {
-            lu_ret = lookupPTSlot(lvl1pt, vaddr, 3);
-
-            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-                userError("RISCVPageMap: No PageTable for this page %p", vaddr);
-                current_syscall_error.type =
-                    seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource =
-                    false;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-        } else if (frameSize == RISCV_2M_Page) {
-            lu_ret = lookupPTSlot(lvl1pt, vaddr, 2);
-            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-                userError("RISCVPageMap: No PageTable for this page %p", vaddr);
-                current_syscall_error.type =
-                    seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource =
-                    false;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
-
-        } else if (frameSize == RISCV_1G_Page) {
-            lu_ret = lookupPTSlot(lvl1pt, vaddr, 1);
-            if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
-                userError("RISCVPageMap: No PageTable for this page %p", vaddr);
-                current_syscall_error.type =
-                    seL4_FailedLookup;
-                current_syscall_error.failedLookupWasSource =
-                    false;
-                return EXCEPTION_SYSCALL_ERROR;
-            }
+        lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
+        if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
+            userError("RISCVPageMap: No PageTable for this page %p", vaddr);
+            current_syscall_error.type =
+                seL4_FailedLookup;
+            current_syscall_error.failedLookupWasSource =
+                false;
+            return EXCEPTION_SYSCALL_ERROR;
         }
 
         asid = cap_page_table_cap_get_capPTMappedASID(lvl1ptCap);
@@ -1174,29 +971,21 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         cap = cap_frame_cap_set_capFMappedASID(cap, asid);
         cap = cap_frame_cap_set_capFMappedAddress(cap,  vaddr);
 
-        switch (frameSize) {
-        case RISCV_1G_Page:
-        case RISCV_2M_Page:
-        case RISCV_4K_Page: {
-            create_mappings_pte_return_t map_ret;
-            map_ret = createSafeMappingEntries_PTE(frame_paddr, vaddr,
-                                                   frameSize, vmRights,
-                                                   attr, lvl1pt);
+        create_mappings_pte_return_t map_ret;
+        map_ret = createSafeMappingEntries_PTE(frame_paddr, vaddr,
+                                               frameSize, vmRights,
+                                               attr, lvl1pt);
 
-            if (unlikely(map_ret.status != EXCEPTION_NONE)) {
-                return map_ret.status;
-            }
-
-            setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
-            return performPageInvocationMapPTE(cap, cte,
-                                               map_ret.pte,
-                                               map_ret.pte_entries);
+        if (unlikely(map_ret.status != EXCEPTION_NONE)) {
+            return map_ret.status;
         }
 
-        default:
-            printf("error: Not a valid page size \n");
-        }
+        setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
+        return performPageInvocationMapPTE(cap, cte,
+                                           map_ret.pte,
+                                           map_ret.pte_entries);
     }
+
 
     case RISCVPageUnmap: {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
@@ -1229,12 +1018,12 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                          word_t *buffer)
 {
-    uint8_t pt_level = cap_page_table_cap_get_capLevel(cap);
+    uint8_t ptLevel = cap_page_table_cap_get_capLevel(cap);
 
     switch (cap_get_capType(cap)) {
 
     case cap_page_table_cap:
-        return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer, pt_level);
+        return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer, ptLevel);
 
     case cap_frame_cap:
         return decodeRISCVFrameInvocation(label, length, cte, cap, extraCaps, buffer);
@@ -1281,7 +1070,6 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
         }
 
         asid_base = i << asidLowBits;
-
 
         if (cap_get_capType(untyped) != cap_untyped_cap ||
                 cap_untyped_cap_get_capBlockSize(untyped) != seL4_ASIDPoolBits ||
@@ -1438,7 +1226,6 @@ exception_t performPageInvocationMapPTE(cap_t cap, cte_t *ctSlot,
     for (i = 0; i < pte_entries.length; i++) {
         pte_entries.base[i] = pte;
     }
-    asm volatile ("sfence.vma");
     return EXCEPTION_NONE;
 }
 

@@ -13,17 +13,6 @@
 #ifndef __ARCH_MACHINE_HARDWARE_H
 #define __ARCH_MACHINE_HARDWARE_H
 
-#define PAGE_BITS 12
-
-/* MMU RISC-V/SV39 related definitions. See RISC-V manual priv-1.10 */
-#define SV39_LVL1_PT_BITS  9
-#define SV39_LVL2_PT_BITS  9
-#define SV39_LVL3_PT_BITS  9
-
-#define SV39_GET_LVL1_PT_INDEX(addr) (((addr) >> 30) & MASK(SV39_LVL1_PT_BITS))
-#define SV39_GET_LVL2_PT_INDEX(addr) (((addr) >> 21) & MASK(SV39_LVL2_PT_BITS))
-#define SV39_GET_LVL3_PT_INDEX(addr) (((addr) >> 12) & MASK(SV39_LVL2_PT_BITS))
-
 #define L1_CACHE_LINE_SIZE 64
 
 #ifndef __ASSEMBLER__
@@ -32,6 +21,19 @@
 #include <config.h>
 #include <arch/types.h>
 #include <linker.h>
+
+
+#define PAGE_BITS 12
+
+/* MMU RISC-V related definitions. See RISC-V manual priv-1.10 */
+
+/* Extract the n-level PT index from a virtual address. This works for any
+ * configured RISC-V system with CONFIG_PT_LEVEL (which can be 2 on Sv32,
+ * 3 on Sv38, or 4 on Sv48)
+ */
+#define RISCV_GET_PT_INDEX(addr, n)  (((addr) >> (((PT_INDEX_BITS) * ((CONFIG_PT_LEVELS) - (n))) + 12)) & MASK(PT_INDEX_BITS))
+#define RISCV_GET_LVL_PGSIZE_BITS(n) (((PT_INDEX_BITS) * (CONFIG_PT_LEVELS - (n))) + 12)
+#define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
 
 /*
  * These values are defined in RISC-V priv-1.10 manual, they represent the
@@ -49,17 +51,34 @@ typedef uint32_t vm_fault_type_t;
 
 enum vm_page_size {
     RISCV_4K_Page,
-    RISCV_2M_Page,
-    RISCV_1G_Page
+    RISCV_Mega_Page,
+#if CONFIG_PT_LEVELS > 2
+    RISCV_Giga_Page,
+#endif
+#if CONFIG_PT_LEVELS > 3
+    RISCV_Tera_Page
+#endif
 };
 
 typedef uint32_t vm_page_size_t;
 
+#if CONFIG_PT_LEVELS == 2
 enum PageSizeConstants {
     RISCV_4K_PageBits  = 12,
-    RISCV_2M_PageBits  = 21,
-    RISCV_1G_PageBits  = 30
+    RISCV_Mega_PageBits  = 22,
 };
+#endif
+
+#if CONFIG_PT_LEVELS > 2
+enum PageSizeConstants {
+    RISCV_4K_PageBits  = 12,
+    RISCV_Mega_PageBits  = 21,
+    RISCV_Giga_PageBits  = 30,
+#if CONFIG_PT_LEVELS == 4
+    RISCV_Tera_PageBits = 39
+#endif
+};
+#endif
 
 static inline unsigned int CONST
 pageBitsForSize(vm_page_size_t pagesize)
@@ -68,15 +87,29 @@ pageBitsForSize(vm_page_size_t pagesize)
     case RISCV_4K_Page:
         return RISCV_4K_PageBits;
 
-    case RISCV_2M_Page:
-        return RISCV_2M_PageBits;
+    case RISCV_Mega_Page:
+        return RISCV_Mega_PageBits;
 
-    case RISCV_1G_Page:
-        return RISCV_1G_PageBits;
+#if CONFIG_PT_LEVELS > 2
+    case RISCV_Giga_Page:
+        return RISCV_Giga_PageBits;
+#endif
+
+#if CONFIG_PT_LEVELS == 4
+    case RISCV_Tera_Page:
+        return RISCV_Tera_PageBits;
+#endif
 
     default:
         fail("Invalid page size");
     }
+}
+
+/* For optimisation/ simplicity, this function assumes size types start from 0 linearly, otherwise it won't work */
+static inline uint32_t CONST
+RISCVpageAtPTLevel(vm_page_size_t pagesize)
+{
+    return (CONFIG_PT_LEVELS - pagesize);
 }
 
 #endif /* __ASSEMBLER__ */
