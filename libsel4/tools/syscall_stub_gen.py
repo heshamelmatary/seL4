@@ -58,7 +58,7 @@ WORD_SIZE_BITS_ARCH = {
     "ia64": 64,
     "x86_64": 64,
     "arm_hyp": 32,
-    "riscv": 64,
+    "riscv": 32,
 }
 
 MESSAGE_REGISTERS_FOR_ARCH = {

@@ -21,6 +21,7 @@
 #include <api/types.h>
 #include <smp/lock.h>
 #include <arch/context_switch.h>
+#include <arch/machine/hardware.h>
 
 void slowpath(syscall_t syscall)
 NORETURN;
@@ -129,50 +130,50 @@ fastpath_restore(word_t badge, word_t msgInfo, tcb_t *cur_thread)
         "mv a0, %[badge] \n"
         "mv a1, %[info] \n"
 
-        "ld ra, (0*%[REGSIZE])(t0)  \n"
-        "ld sp, (1*%[REGSIZE])(t0)  \n"
-        "ld gp, (2*%[REGSIZE])(t0)  \n"
+        "LW ra, (0*%[REGSIZE])(t0)  \n"
+        "LW sp, (1*%[REGSIZE])(t0)  \n"
+        "LW gp, (2*%[REGSIZE])(t0)  \n"
         /* skip tp */
         /* skip x5/t0 */
-        "ld t2, (6*%[REGSIZE])(t0)  \n"
-        "ld s0, (7*%[REGSIZE])(t0)  \n"
-        "ld s1, (8*%[REGSIZE])(t0)  \n"
-        "ld a2, (11*%[REGSIZE])(t0) \n"
-        "ld a3, (12*%[REGSIZE])(t0) \n"
-        "ld a4, (13*%[REGSIZE])(t0) \n"
-        "ld a5, (14*%[REGSIZE])(t0) \n"
-        "ld a6, (15*%[REGSIZE])(t0) \n"
-        "ld a7, (16*%[REGSIZE])(t0) \n"
-        "ld s2, (17*%[REGSIZE])(t0) \n"
-        "ld s3, 18*%[REGSIZE](t0) \n"
-        "ld s4, 19*%[REGSIZE](t0) \n"
-        "ld s5, 20*%[REGSIZE](t0) \n"
-        "ld s6, 21*%[REGSIZE](t0) \n"
-        "ld s7, 22*%[REGSIZE](t0) \n"
-        "ld s8, 23*%[REGSIZE](t0) \n"
-        "ld s9, 24*%[REGSIZE](t0) \n"
-        "ld s10, 25*%[REGSIZE](t0)\n"
-        "ld s11, 26*%[REGSIZE](t0)\n"
-        "ld t3, 27*%[REGSIZE](t0) \n"
-        "ld t4, 28*%[REGSIZE](t0) \n"
-        "ld t5, 29*%[REGSIZE](t0) \n"
-        "ld t6, 30*%[REGSIZE](t0) \n"
+        "LW t2, (6*%[REGSIZE])(t0)  \n"
+        "LW s0, (7*%[REGSIZE])(t0)  \n"
+        "LW s1, (8*%[REGSIZE])(t0)  \n"
+        "LW a2, (11*%[REGSIZE])(t0) \n"
+        "LW a3, (12*%[REGSIZE])(t0) \n"
+        "LW a4, (13*%[REGSIZE])(t0) \n"
+        "LW a5, (14*%[REGSIZE])(t0) \n"
+        "LW a6, (15*%[REGSIZE])(t0) \n"
+        "LW a7, (16*%[REGSIZE])(t0) \n"
+        "LW s2, (17*%[REGSIZE])(t0) \n"
+        "LW s3, 18*%[REGSIZE](t0) \n"
+        "LW s4, 19*%[REGSIZE](t0) \n"
+        "LW s5, 20*%[REGSIZE](t0) \n"
+        "LW s6, 21*%[REGSIZE](t0) \n"
+        "LW s7, 22*%[REGSIZE](t0) \n"
+        "LW s8, 23*%[REGSIZE](t0) \n"
+        "LW s9, 24*%[REGSIZE](t0) \n"
+        "LW s10, 25*%[REGSIZE](t0)\n"
+        "LW s11, 26*%[REGSIZE](t0)\n"
+        "LW t3, 27*%[REGSIZE](t0) \n"
+        "LW t4, 28*%[REGSIZE](t0) \n"
+        "LW t5, 29*%[REGSIZE](t0) \n"
+        "LW t6, 30*%[REGSIZE](t0) \n"
         /* Get next restored tp */
-        "ld t1, 3*%[REGSIZE](t0)  \n"
+        "LW t1, 3*%[REGSIZE](t0)  \n"
         /* get restored tp */
         "add tp, t1, x0  \n"
         /* get sepc */
-        "ld t1, 35*%[REGSIZE](t0)\n"
+        "LW t1, 35*%[REGSIZE](t0)\n"
         "csrw sepc, t1  \n"
 
         /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
         "csrw sscratch, t0\n"
 
-        "ld t1, 32*%[REGSIZE](t0) \n"
+        "LW t1, 32*%[REGSIZE](t0) \n"
         "csrw sstatus, t1\n"
 
-        "ld t1, (5*%[REGSIZE])(t0) \n"
-        "ld t0, (4*%[REGSIZE])(t0) \n"
+        "LW t1, (5*%[REGSIZE])(t0) \n"
+        "LW t0, (4*%[REGSIZE])(t0) \n"
         "sret"
         : /* no output */
         : [cur_thread] "r" (cur_thread_reg),

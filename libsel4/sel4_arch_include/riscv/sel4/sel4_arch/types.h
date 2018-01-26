@@ -14,17 +14,19 @@
 #include <autoconf.h>
 #include <sel4/simple_types.h>
 
+#if __riscv_xlen == 32
+#define seL4_WordBits        32
+typedef seL4_Uint32 seL4_Word;
+#else
 typedef seL4_Uint64 seL4_Word;
+#define seL4_WordBits        64
+#endif
 typedef seL4_Word seL4_NodeId;
 typedef seL4_Word seL4_PAddr;
 typedef seL4_Word seL4_Domain;
 
-#define seL4_WordBits        64
 #define seL4_PageBits        12
-#define seL4_4MBits          22
 #define seL4_EndpointBits     4
-#define seL4_IOPageTableBits 12
-#define seL4_RISCV_VCPUBits 14
 
 typedef seL4_Word seL4_CPtr;
 

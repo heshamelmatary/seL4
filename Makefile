@@ -48,7 +48,7 @@ $(if $(filter ${PLAT},${PLAT_LIST}),, \
 
 ifeq (${ARCH}, riscv)
 SEL4_ARCH:=riscv
-TYPE_SUFFIX:=64
+TYPE_SUFFIX:=32
 CFLAGS += -mcmodel=medany
 endif
 
@@ -365,6 +365,10 @@ ifeq ($(PLAT),bcm2837)
 DEFINES += -DBCM2837
 endif
 endif # SEL4_ARCH=aarch32
+ifeq (${SEL4_ARCH}, riscv)
+DEFINES += -D__KERNEL_32__
+TYPE_SUFFIX:=32
+endif # SEL4_ARCH=riscv
 ifeq (${SEL4_ARCH}, aarch64)
 DEFINES += -D__KERNEL_64__ -DAARCH64
 TYPE_SUFFIX:=64

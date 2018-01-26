@@ -33,6 +33,8 @@ $(error Cannot determine TYPE_SUFFIX)
 endif
 endif
 
+TYPE_SUFFIX:=32
+
 # Targets
 PRIORITY_TARGETS := include/interfaces/sel4_client.h include/sel4/syscall.h \
 					include/sel4/invocation.h arch_include/${ARCH}/sel4/arch/invocation.h \

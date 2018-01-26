@@ -17,8 +17,12 @@
 
 #if __riscv_xlen == 64
 #define seL4_WordBits           64
+/* IPC buffer is 1024 bytes, giving size bits of 10 */
+#define seL4_IPCBufferSizeBits 10
 #else
 #define seL4_WordBits           32
+/* IPC buffer is 512 bytes, giving size bits of 9 */
+#define seL4_IPCBufferSizeBits  9
 #endif
 
 #define seL4_PageBits           12
@@ -49,9 +53,6 @@
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4
 #define seL4_MaxUntypedBits 47
-
-/* IPC buffer is 1024 bytes, giving size bits of 10 */
-#define seL4_IPCBufferSizeBits 10
 
 enum {
     seL4_VMFault_IP,

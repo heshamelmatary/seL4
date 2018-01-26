@@ -37,8 +37,8 @@ config KERNEL_MASTER
 # the target platform.
 config WORD_SIZE
     int
-    default 32 if ARCH_IA32 || ARCH_AARCH32
-    default 64 if ARCH_X86_64 || ARCH_AARCH64 || ARCH_RISCV
+    default 32 if ARCH_IA32 || ARCH_AARCH32 || ARCH_RISCV32
+    default 64 if ARCH_X86_64 || ARCH_AARCH64 || ARCH_RISCV64
 
 menu "seL4 System"
 
@@ -78,6 +78,16 @@ menu "seL4 System"
         bool
         default y if !ARCH_AARCH64 && ARCH_ARM
 
+    config ARCH_RISCV64
+        bool "64-bit kernel"
+        default y
+        depends on ARCH_RISCV
+
+    config ARCH_RISCV32
+        bool "32-bit kernel"
+        default n
+        depends on ARCH_RISCV
+
     # CPU values.
 
     config ARM1136JF_S
@@ -88,7 +98,7 @@ menu "seL4 System"
         bool
         default n
 
-    config ARM_CORTEX_A8 
+    config ARM_CORTEX_A8
         bool
         default n
 
@@ -120,13 +130,19 @@ menu "seL4 System"
        help
             Select the RISC-V CPU Implementation
 
-        config ROCKET_CHIP
-            bool "ROCKET_CHIP"
+        config RISCV_RV64
+            bool "RISCV RV64"
             depends on ARCH_RISCV
             select ARCH_RISCV64
             help
-                Support for RV64 Rocket Chip
+                Support for RV64
 
+        config RISCV_RV32
+            bool "RISCV RV32"
+            depends on ARCH_RISCV
+            select ARCH_RISCV32
+            help
+                Support for RV32
     endchoice
 
     config PLAT_EXYNOS54XX
@@ -452,7 +468,7 @@ menu "seL4 System Parameters"
 
 config AARCH32_FPU_ENABLE_CONTEXT_SWITCH
     bool "Enable hardware VFP and SIMD context switch"
-    depends on ARCH_AARCH32 && !ARCH_ARM_V6 && !VERIFICATION_BUILD 
+    depends on ARCH_AARCH32 && !ARCH_ARM_V6 && !VERIFICATION_BUILD
     select HAVE_FPU
     default y
     help
@@ -475,7 +491,7 @@ config FPU_MAX_RESTORES_SINCE_SWITCH
 endmenu
 
 menu "Build Options"
-   
+
     config VERIFICATION_BUILD
         bool "Disable verification unfriendly features"
         default n
@@ -635,7 +651,7 @@ menu "Build Options"
         depends on ARCH_X86 || PLAT_HIKEY
         default n
         help
-            On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 
+            On ia32 platforms, this option disables the L2 hardware prefetcher, the L2
             adjacent cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher.
             On the cortex a53 this disables the L1 Data prefetcher.
 
@@ -645,7 +661,7 @@ menu "Build Options"
         range 1 7
         depends on PLAT_HIKEY && !DEBUG_DISABLE_PREFETCHERS
         help
-            Cortex A53 has an L1 Data prefetcher. This config options allows 
+            Cortex A53 has an L1 Data prefetcher. This config options allows
             the number of outstanding prefetcher to be set from a number from
             1 to 7. Note that a setting of 7 maps to 8 and 5 is the reset value.
 

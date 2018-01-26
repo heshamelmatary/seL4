@@ -8,7 +8,7 @@
  * @TAG(GD_GPL)
  */
 
-OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv")
+/* OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv") */
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
@@ -19,7 +19,7 @@ KERNEL_BASE  = 0xFFFFFFFF80000000;
 #elif CONFIG_PT_LEVELS == 3
 KERNEL_BASE  = 0xFFFFFFC000000000;
 #elif CONFIG_PT_LEVELS == 4
-KERNEL_BASE  = 0xFFFF800000000000llu
+KERNEL_BASE  = 0xFFFF800000000000;
 #endif
 
 /* WARNING: constants also defined in plat/machine/hardware.h */

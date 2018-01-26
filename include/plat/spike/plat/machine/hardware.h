@@ -13,7 +13,6 @@
 
 #include <config.h>
 
-#define kernelBase
 #define physBase          0x00000000C0000000llu
 #define PADDR_BASE        physBase /* for compatibility with proofs */
 
