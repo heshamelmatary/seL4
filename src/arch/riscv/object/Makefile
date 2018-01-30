@@ -16,14 +16,6 @@
 # Copyright 2015, 2016 Hesham Almatary <heshamelmatary@gmail.com>
 #
 
-DIRECTORIES += src/arch/riscv/
+DIRECTORIES += src/arch/riscv/object
 
-include ${SOURCE_ROOT}/src/arch/riscv/object/Makefile
-include ${SOURCE_ROOT}/src/arch/riscv/api/Makefile
-include ${SOURCE_ROOT}/src/arch/riscv/kernel/Makefile
-include ${SOURCE_ROOT}/src/arch/riscv/model/Makefile
-include ${SOURCE_ROOT}/src/arch/riscv/machine/Makefile
-include ${SOURCE_ROOT}/src/arch/riscv/smp/Makefile
-
-ARCH_ASM_SOURCES += head.S traps.S
-ARCH_C_SOURCES += c_traps.c idle.c
+ARCH_C_SOURCES += object/tcb.c object/interrupt.c object/objecttype.c
