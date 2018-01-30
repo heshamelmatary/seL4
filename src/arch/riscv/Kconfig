@@ -1,0 +1,44 @@
+#
+# Copyright 2014, General Dynamics C4 Systems
+#
+# This software may be distributed and modified according to the terms of
+# the GNU General Public License version 2. Note that NO WARRANTY is provided.
+# See "LICENSE_GPLv2.txt" for details.
+#
+# @TAG(GD_GPL)
+#
+
+config HAVE_ARCH_TIMER
+    bool
+    default y
+
+config PT_LEVELS
+    int "Number of page table levels"
+    default 3
+    help
+        Number of page tables levels for RISC-V depends on the mode. For
+        example there are: 2, 3 and 4 levels on Sv32, Sv39, Sv48 RISC-V paging
+        modes respectively.
+
+config KERNEL_WINDOW_SIZE_BIT
+    int "Desired kernel window size in bits"
+    default 30
+    help
+        Configure the desired kernel window size
+choice
+    prompt "IPC Buffer location"
+    default IPC_BUF_IN_RISCV_TP_REGISTER
+    depends on ARCH_RISCV
+    help
+        Controls how the location of the IPC buffer is
+        provided to the user
+
+    config IPC_BUF_IN_RISCV_TP_REGISTER
+        bool "TP register"
+        default y
+        help
+            Put the address of the IPC buffer in the user
+            readable/writeable TP register. When enabled
+            this has the result of the kernel overwriting
+            any value the user writes to this register.
+endchoice
