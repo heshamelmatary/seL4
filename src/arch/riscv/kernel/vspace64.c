@@ -84,6 +84,8 @@ BOOT_CODE VISIBLE void
 map_kernel_window(void)
 {
     /* mapping of kernelBase (virtual address) to kernel's physBase  */
+    assert(CONFIG_PT_LEVELS > 1 && CONFIG_PT_LEVELS <= 4);
+
 
     /* Calculate the number of PTEs to map the kernel in the first level PT */
     int num_lvl1_entries = ROUND_UP((BIT(CONFIG_KERNEL_WINDOW_SIZE_BIT) / RISCV_GET_LVL_PGSIZE(1)), 1);
@@ -91,7 +93,7 @@ map_kernel_window(void)
     for (int i = 0; i < num_lvl1_entries; i++) {
         kernel_pageTables[0][RISCV_GET_PT_INDEX(kernelBase, 1) + i] =  pte_new(
                                                                            /* physical address has to be strictly aligned to the correponding page size */
-                                                                           ((physBase) >> RISCV_4K_PageBits),
+                                                                           ((physBase + RISCV_GET_LVL_PGSIZE(1) * i) >> RISCV_4K_PageBits),
                                                                            0,  /* sw */
                                                                            1,  /* dirty */
                                                                            1,  /* accessed */
@@ -255,7 +257,6 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
 
     }
 
-    setVSpaceRoot(addrFromPPtr( (void *) lvl1pt_pptr), IT_ASID);
     return lvl1pt_cap;
 }
 
@@ -292,7 +293,8 @@ findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
 
     vspace_root = poolPtr->array[asid & MASK(asidLowBits)];
     if (!vspace_root) {
-        current_lookup_fault = lookup_fault_invalid_root_new();
+        //current_lookup_fault = lookup_fault_invalid_root_new();
+        current_lookup_fault = lookup_fault_missing_capability_new(RISCV_GET_LVL_PGSIZE_BITS(1));
 
         ret.vspace_root = NULL;
         ret.status = EXCEPTION_LOOKUP_FAULT;
@@ -910,10 +912,9 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
         lvl1pt = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(
                              lvl1ptCap));
 
-        lookupPTSlot_ret_t lu_ret;
-
         /* Check if this page is already mapped */
-        lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
+        lookupPTSlot_ret_t lu_ret = lookupPTSlot(lvl1pt, vaddr, RISCVpageAtPTLevel(frameSize));
+
         if (unlikely(lu_ret.status != EXCEPTION_NONE)) {
             userError("RISCVPageMap: No PageTable for this page %p", vaddr);
             current_syscall_error.type =

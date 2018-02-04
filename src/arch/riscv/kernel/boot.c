@@ -448,7 +448,7 @@ init_kernel(
 
 #if CONFIG_MAX_NUM_NODES > 1
     if (hartid == 0) {
-        printf( "********* seL4 microkernel on RISC-V 64-bit platform *********\n");
+        printf( "********* seL4 microkernel on RISC-V %d-bit platform *********\n", __riscv_xlen);
         init_plat();
         result = try_init_kernel(ui_p_reg_start,
                                  ui_p_reg_end,

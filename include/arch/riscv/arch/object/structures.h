@@ -12,6 +12,7 @@
 #define __ARCH_OBJECT_STRUCTURES_H
 
 #ifndef __ASSEMBLER__
+#include <config.h>
 #include <assert.h>
 #include <util.h>
 #include <api/types.h>
@@ -19,13 +20,9 @@
 #include <arch/object/structures_gen.h>
 #include <arch/machine/hardware.h>
 #include <arch/machine/registerset.h>
+#include <mode/object/structures.h>
 
 #define tcbArchCNodeEntries tcbCNodeEntries
-
-enum asidSizeConstants {
-    asidHighBits = 6,
-    asidLowBits = seL4_ASIDPoolIndexBits
-};
 
 struct asid_pool {
     void* array[BIT(asidLowBits)];
@@ -66,16 +63,10 @@ typedef pte_t pde_t;
 
 #define PT_SIZE_BITS 12
 #define PT_PTR(r) ((pte_t *)(r))
-#define PT_REF(p) ((uint64_t)(p))
+#define PT_REF(p) ((word_t)(p))
 
 #define PTE_SIZE_BITS   seL4_PageTableEntryBits
 #define PT_INDEX_BITS   seL4_PageTableIndexBits
-
-#if __riscv_xlen == 64
-#define WORD_SIZE_BITS 3
-#else
-#define WORD_SIZE_BITS 2
-#endif
 
 #define WORD_BITS   (8 * sizeof(word_t))
 #define WORD_PTR(r) ((word_t *)(r))

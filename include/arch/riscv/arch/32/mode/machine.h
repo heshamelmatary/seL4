@@ -10,15 +10,9 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_MODE_TYPES_H
-#define __ARCH_MODE_TYPES_H
+#ifndef __ARCH_MODE_MACHINE_H
+#define __ARCH_MODE_MACHINE_H
 
-#include <config.h>
-#include <assert.h>
-#include <stdint.h>
+/* Place holder for 32-bit machine header */
 
-compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
-
-#define wordRadix 6
-
-#endif
+#endif /* __ARCH_MODE_MACHINE_H */

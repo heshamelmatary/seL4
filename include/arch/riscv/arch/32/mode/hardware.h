@@ -10,15 +10,10 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_MODE_TYPES_H
-#define __ARCH_MODE_TYPES_H
+#ifndef __ARCH_MODE_HARDWARE_H
+#define __ARCH_MODE_HARDWARE_H
 
-#include <config.h>
-#include <assert.h>
-#include <stdint.h>
+/* Place holder for 32-bit hardware header */
 
-compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
+#endif /* __ARCH_MODE_HARDWARE_H */
 
-#define wordRadix 6
-
-#endif

@@ -37,8 +37,8 @@ config KERNEL_MASTER
 # the target platform.
 config WORD_SIZE
     int
-    default 32 if ARCH_IA32 || ARCH_AARCH32
-    default 64 if ARCH_X86_64 || ARCH_AARCH64 || ARCH_RISCV
+    default 32 if ARCH_IA32 || ARCH_AARCH32 || ARCH_RISCV_RV32
+    default 64 if ARCH_X86_64 || ARCH_AARCH64 || ARCH_RISCV_RV64
 
 menu "seL4 System"
 
@@ -120,13 +120,18 @@ menu "seL4 System"
        help
             Select the RISC-V CPU Implementation
 
-        config ROCKET_CHIP
-            bool "ROCKET_CHIP"
-            depends on ARCH_RISCV
-            select ARCH_RISCV64
+        config ARCH_RISCV_RV64
+            bool "RISCV RV64"
+            default y
             help
-                Support for RV64 Rocket Chip
+                Support for RV64 (RISC-V 64-bit)
 
+        config ARCH_RISCV_RV32
+            bool "RISCV RV32"
+            depends on PT_LEVELS = 2
+            help
+                Support for RV32 (RISC-V 32-bit). Only 2 levels PT is supported
+                for RV32
     endchoice
 
     config PLAT_EXYNOS54XX

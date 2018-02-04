@@ -48,7 +48,11 @@ $(if $(filter ${PLAT},${PLAT_LIST}),, \
 
 ifeq (${ARCH}, riscv)
 SEL4_ARCH:=riscv
+ifeq (${KERNEL_32}, y)
+TYPE_SUFFIX:=32
+else
 TYPE_SUFFIX:=64
+endif
 endif
 
 ifeq (${ARCH}, arm)
@@ -416,8 +420,8 @@ INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/64"
 INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/64"
 endif
 ifeq ($(SEL4_ARCH), riscv)
-INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/64"
-INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/64"
+INCLUDES += "-I${SOURCE_ROOT}/include/arch/$(ARCH)/arch/$(TYPE_SUFFIX)"
+INCLUDES += "-I${SOURCE_ROOT}/include/plat/$(PLAT)/plat/$(TYPE_SUFFIX)"
 endif
 endif
 

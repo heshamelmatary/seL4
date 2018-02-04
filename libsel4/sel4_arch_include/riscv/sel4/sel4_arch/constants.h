@@ -15,43 +15,51 @@
 
 #include <autoconf.h>
 
-#if __riscv_xlen == 64
-#define seL4_WordBits           64
-#else
+#ifdef CONFIG_ARCH_RISCV_RV32
 #define seL4_WordBits           32
-#endif
+#define seL4_SlotBits           4
+#define seL4_NotificationBits   4
+#define seL4_ASIDPoolIndexBits  9
+#define seL4_IPCBufferSizeBits  9
+#define seL4_MaxUntypedBits     29
 
-#define seL4_PageBits           12
-#define seL4_SlotBits           5
-#define seL4_TCBBits            11
-#define seL4_EndpointBits       4
-#define seL4_NotificationBits   5
-
-#define seL4_PageTableBits      12
-#if CONFIG_PT_LEVELS == 2
+/* Sv32 pages/ptes sizes */
 #define seL4_PageTableEntryBits 2
 #define seL4_PageTableIndexBits 10
 #define seL4_LargePageBits      22
-#elif CONFIG_PT_LEVELS == 3 || CONFIG_PT_LEVELS == 4
+
+#elif defined(CONFIG_ARCH_RISCV_RV64)
+
+#define seL4_WordBits           64
+#define seL4_SlotBits           5
+#define seL4_NotificationBits   5
+#define seL4_ASIDPoolIndexBits  10
+#define seL4_IPCBufferSizeBits  10
+#define seL4_MaxUntypedBits     47
+
+/* Sv39/Sv48 pages/ptes sizes */
 #define seL4_PageTableEntryBits 3
 #define seL4_PageTableIndexBits 9
 #define seL4_LargePageBits      21
 #define seL4_HugePageBits       30
-#endif
 
+/* Only for Sv48 */
 #if CONFIG_PT_LEVELS == 4
 #define seL4_TeraPageBits       39
-#endif
+#endif /* CONFIG_PT_LEVELS == 4 */
 
-#define seL4_ASIDPoolIndexBits  10
+#else /* CONFIG_ARCH_RISCV_* */
+#error "Wrong RISC-V mode"
+#endif /* CONFIG_ARCH_RISCV_RV32 */
+
+/* Shared definitions */
+#define seL4_PageBits           12
+#define seL4_TCBBits            11
+#define seL4_EndpointBits       4
+#define seL4_PageTableBits      12
 #define seL4_ASIDPoolBits       12
-
 /* Untyped size limits */
 #define seL4_MinUntypedBits 4
-#define seL4_MaxUntypedBits 47
-
-/* IPC buffer is 1024 bytes, giving size bits of 10 */
-#define seL4_IPCBufferSizeBits 10
 
 enum {
     seL4_VMFault_IP,
@@ -83,6 +91,5 @@ enum {
     seL4_UserException_Code,
     seL4_UserException_Length,
 } seL4_UserException_Msg;
-
 
 #endif

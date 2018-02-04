@@ -8,7 +8,6 @@
  * @TAG(GD_GPL)
  */
 
-OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 

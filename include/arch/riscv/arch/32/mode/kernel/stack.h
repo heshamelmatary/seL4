@@ -10,15 +10,12 @@
  * @TAG(DATA61_GPL)
  */
 
-#ifndef __ARCH_MODE_TYPES_H
-#define __ARCH_MODE_TYPES_H
+#ifndef __KERNEL_MODE_STACK_H
+#define __KERNEL_MODE_STACK_H
 
 #include <config.h>
-#include <assert.h>
-#include <stdint.h>
+#include <util.h>
 
-compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
+#define KERNEL_STACK_ALIGNMENT 4096
 
-#define wordRadix 6
-
-#endif
+#endif /* __KERNEL_MODE_STACK_H */

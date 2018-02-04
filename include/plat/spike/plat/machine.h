@@ -14,9 +14,6 @@
 
 #define N_INTERRUPTS 6
 
-#define wordRadix 6
-#define wordBits (1 << wordRadix)
-
 #ifndef __ASSEMBLER__
 enum IRQConstants {
     INTERRUPT_SW = 0,
