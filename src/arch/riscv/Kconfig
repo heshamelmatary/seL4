@@ -35,7 +35,6 @@ choice
 
     config IPC_BUF_IN_RISCV_TP_REGISTER
         bool "TP register"
-        default y
         help
             Put the address of the IPC buffer in the user
             readable/writeable TP register. When enabled

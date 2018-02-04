@@ -15,14 +15,6 @@
 
 #define L1_CACHE_LINE_SIZE 64
 
-#ifndef __ASSEMBLER__
-
-#include <arch/types.h>
-#include <config.h>
-#include <arch/types.h>
-#include <linker.h>
-
-
 #define PAGE_BITS 12
 
 /* MMU RISC-V related definitions. See RISC-V manual priv-1.10 */
@@ -34,6 +26,13 @@
 #define RISCV_GET_PT_INDEX(addr, n)  (((addr) >> (((PT_INDEX_BITS) * ((CONFIG_PT_LEVELS) - (n))) + 12)) & MASK(PT_INDEX_BITS))
 #define RISCV_GET_LVL_PGSIZE_BITS(n) (((PT_INDEX_BITS) * (CONFIG_PT_LEVELS - (n))) + 12)
 #define RISCV_GET_LVL_PGSIZE(n)      BIT(RISCV_GET_LVL_PGSIZE_BITS((n)))
+
+#ifndef __ASSEMBLER__
+
+#include <arch/types.h>
+#include <config.h>
+#include <arch/types.h>
+#include <linker.h>
 
 /*
  * These values are defined in RISC-V priv-1.10 manual, they represent the
@@ -113,5 +112,13 @@ RISCVpageAtPTLevel(vm_page_size_t pagesize)
 }
 
 #endif /* __ASSEMBLER__ */
+
+#if __riscv_xlen == 32
+#define LOAD  lw
+#define STORE sw
+#else /* __riscv_xlen == 64 */
+#define LOAD  ld
+#define STORE sd
+#endif
 
 #endif /* !__ARCH_MACHINE_HARDWARE_H */

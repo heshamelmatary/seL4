@@ -17,8 +17,8 @@
 #include <assert.h>
 #include <stdint.h>
 
-compile_assert(long_is_64bits, sizeof(unsigned long) == 8)
+compile_assert(long_is_32bits, sizeof(unsigned long) == 4)
 
-#define wordRadix 6
+#define wordRadix 5
 
 #endif

@@ -16,6 +16,7 @@
 #include <machine/debug.h>
 #include <api/syscall.h>
 #include <util.h>
+#include <arch/machine/hardware.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
@@ -29,11 +30,67 @@ void VISIBLE NORETURN restore_user_context(void)
 
     NODE_UNLOCK_IF_HELD;
 
+#if __riscv_xlen == 32
     asm volatile(
         "mv t0, %[cur_thread]       \n"
-        "ld ra, (0*%[REGSIZE])(t0)  \n"
-        "ld sp, (1*%[REGSIZE])(t0)  \n"
-        "ld gp, (2*%[REGSIZE])(t0)  \n"
+        "LW ra, (0*%[REGSIZE])(t0)  \n"
+        "LW sp, (1*%[REGSIZE])(t0)  \n"
+        "LW gp, (2*%[REGSIZE])(t0)  \n"
+        /* skip tp */
+        /* skip x5/t0 */
+        "LW t2, (6*%[REGSIZE])(t0)  \n"
+        "LW s0, (7*%[REGSIZE])(t0)  \n"
+        "LW s1, (8*%[REGSIZE])(t0)  \n"
+        "LW a0, (9*%[REGSIZE])(t0) \n"
+        "LW a1, (10*%[REGSIZE])(t0) \n"
+        "LW a2, (11*%[REGSIZE])(t0) \n"
+        "LW a3, (12*%[REGSIZE])(t0) \n"
+        "LW a4, (13*%[REGSIZE])(t0) \n"
+        "LW a5, (14*%[REGSIZE])(t0) \n"
+        "LW a6, (15*%[REGSIZE])(t0) \n"
+        "LW a7, (16*%[REGSIZE])(t0) \n"
+        "LW s2, (17*%[REGSIZE])(t0) \n"
+        "LW s3, (18*%[REGSIZE])(t0) \n"
+        "LW s4, (19*%[REGSIZE])(t0) \n"
+        "LW s5, (20*%[REGSIZE])(t0) \n"
+        "LW s6, (21*%[REGSIZE])(t0) \n"
+        "LW s7, (22*%[REGSIZE])(t0) \n"
+        "LW s8, (23*%[REGSIZE])(t0) \n"
+        "LW s9, (24*%[REGSIZE])(t0) \n"
+        "LW s10, (25*%[REGSIZE])(t0)\n"
+        "LW s11, (26*%[REGSIZE])(t0)\n"
+        "LW t3, (27*%[REGSIZE])(t0) \n"
+        "LW t4, (28*%[REGSIZE])(t0) \n"
+        "LW t5, (29*%[REGSIZE])(t0) \n"
+        "LW t6, (30*%[REGSIZE])(t0) \n"
+        /* Get next restored tp */
+        "LW t1, (3*%[REGSIZE])(t0)  \n"
+        /* get restored tp */
+        "add tp, t1, x0  \n"
+        /* get sepc */
+        "LW t1, (35*%[REGSIZE])(t0)\n"
+        "csrw sepc, t1  \n"
+
+        /* Write back sscratch with cur_thread_reg to get it back on the next trap entry */
+        "csrw sscratch, t0         \n"
+
+        "LW t1, (32*%[REGSIZE])(t0) \n"
+        "csrw sstatus, t1\n"
+
+        "LW t1, (5*%[REGSIZE])(t0) \n"
+        "LW t0, (4*%[REGSIZE])(t0) \n"
+        "sret"
+        : /* no output */
+        : [REGSIZE] "i" (sizeof(word_t)),
+        [cur_thread] "r" (cur_thread_reg)
+        : "memory"
+    );
+#else /* __riscv_xlen == 64 */
+    asm volatile(
+        "mv t0, %[cur_thread]       \n"
+        "Ld ra, (0*%[REGSIZE])(t0)  \n"
+        "Ld sp, (1*%[REGSIZE])(t0)  \n"
+        "Ld gp, (2*%[REGSIZE])(t0)  \n"
         /* skip tp */
         /* skip x5/t0 */
         "ld t2, (6*%[REGSIZE])(t0)  \n"
@@ -83,6 +140,8 @@ void VISIBLE NORETURN restore_user_context(void)
         [cur_thread] "r" (cur_thread_reg)
         : "memory"
     );
+
+#endif
 
     UNREACHABLE();
 }

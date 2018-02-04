@@ -23,8 +23,7 @@
 /* NOTE: Regions are not allowed to be adjacent! */
 
 const p_region_t BOOT_RODATA avail_p_regs[] = {
-    /* 128 MiB of memory minus kernel image at its beginning */
-    { .start = 0x00000000C0000000, .end = 0x0000000100000000 }
+    { .start = 0x00000000C0000000, .end = 0x0000000ffffffff }
 };
 
 BOOT_CODE int get_num_avail_p_regs(void)
@@ -57,7 +56,7 @@ getActiveIRQ(void)
     uint64_t temp = 0;
     asm volatile ("csrr %0, scause":"=r" (temp)::);
 
-    if (!(temp & 0x8000000000000000UL)) {
+    if (!(temp & BIT(__riscv_xlen - 1))) {
         return irqInvalid;
     }
 
@@ -119,8 +118,17 @@ ackInterrupt(irq_t irq)
 }
 
 static unsigned long timebase;
-
 static inline uint64_t get_cycles(void)
+#ifdef CONFIG_ARCH_RISCV_RV32
+{
+    uint32_t nH, nL;
+    __asm__ __volatile__ (
+        "rdtimeh %0\n"
+        "rdtime  %1\n"
+        : "=r" (nH), "=r" (nL));
+    return ((uint64_t) (nH << 32)) | (nL);
+}
+#else
 {
     uint64_t n;
     __asm__ __volatile__ (
@@ -128,6 +136,7 @@ static inline uint64_t get_cycles(void)
         : "=r" (n));
     return n;
 }
+#endif
 
 static inline int read_current_timer(unsigned long *timer_val)
 {
