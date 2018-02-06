@@ -32,12 +32,6 @@ VISIBLE NORETURN SECTION(".vectors.text");
 void fastpath_reply_wait(word_t cptr, word_t r_msgInfo)
 VISIBLE NORETURN SECTION(".vectors.text");
 
-/* When building the fastpath the assembler in traps.S makes these
- * assumptions. Because compile_asserts are hard to do in assembler,
- * we place them here */
-compile_assert(SysCall_Minus1, SysCall == -1)
-compile_assert(SysReplyRecv_Minus2, SysReplyRecv == -2)
-
 /* Use macros to not break verification */
 #define endpoint_ptr_get_epQueue_tail_fp(ep_ptr) TCB_PTR(endpoint_ptr_get_epQueue_tail(ep_ptr))
 #define cap_vtable_cap_get_vspace_root_fp(vtable_cap) PTE_PTR(cap_page_table_cap_get_capPTBasePtr(vtable_cap))
