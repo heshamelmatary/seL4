@@ -34,6 +34,7 @@ block frame_cap {
     field       capFMapType         2
     field       capFVMRights        2
     field       capFIsDevice        1
+
     padding                         4
     field_high  capFMappedAddress   48
 }
@@ -44,8 +45,7 @@ block page_table_cap {
     field_high  capPTBasePtr        48
 
     field       capType             5
-    padding                         7
-    field       capLevel            3
+    padding                         10
     field       capPTIsMapped       1
     field_high  capPTMappedAddress  48
 }

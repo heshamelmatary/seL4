@@ -81,7 +81,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
         }
         break;
     case cap_page_table_cap:
-        if (final && (cap_page_table_cap_get_capLevel(cap) == 1)) {
+        if (final && isVTableRoot(cap)) {
             deleteASID(cap_page_table_cap_get_capPTMappedASID(cap),
                        PTE_PTR(cap_page_table_cap_get_capPTBasePtr(cap)));
 
@@ -89,8 +89,7 @@ Arch_finaliseCap(cap_t cap, bool_t final)
             unmapPageTable(
                 cap_page_table_cap_get_capPTMappedASID(cap),
                 cap_page_table_cap_get_capPTMappedAddress(cap),
-                PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap)),
-                cap_page_table_cap_get_capLevel(cap)
+                PT_PTR(cap_page_table_cap_get_capPTBasePtr(cap))
             );
         }
         break;
@@ -234,7 +233,6 @@ cap_t Arch_createObject(object_t t, void *regionBase, int userSize, bool_t
         return cap_page_table_cap_new(
                    asidInvalid,            /* capPTMappedASID    */
                    (word_t)regionBase,     /* capPTBasePtr       */
-                   0,                      /* capLevel    */
                    0,                      /* capPTIsMapped      */
                    0                       /* capPTMappedAddress */
                );

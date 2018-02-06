@@ -71,7 +71,8 @@ isValidVTableRoot_fp(cap_t vspace_root_cap)
 {
     return cap_capType_equals(vspace_root_cap, cap_page_table_cap) &&
            cap_page_table_cap_get_capPTIsMapped(vspace_root_cap) &&
-           (cap_page_table_cap_get_capLevel(vspace_root_cap) == 1);
+           findVSpaceForASID(cap_page_table_cap_get_capPTMappedASID(vspace_root_cap)).status != EXCEPTION_NONE;
+           //(cap_page_table_cap_get_capLevel(vspace_root_cap) == 1);
 }
 
 /* This is an accelerated check that msgLength, which appears

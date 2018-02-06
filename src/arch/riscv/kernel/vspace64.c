@@ -191,7 +191,6 @@ create_it_pt_cap(cap_t vspace_cap, pptr_t pptr, vptr_t vptr, asid_t asid, uint32
     cap = cap_page_table_cap_new(
               asid,   /* capPTMappedASID      */
               pptr,   /* capPTBasePtr         */
-              ptLevel,/* capLevel             */
               1,      /* capPTIsMapped        */
               vptr    /* capPTMappedAddress   */
           );
@@ -226,7 +225,6 @@ create_it_address_space(cap_t root_cnode_cap, v_region_t it_v_reg)
         cap_page_table_cap_new(
             IT_ASID,               /* capPTMappedASID    */
             (word_t) lvl1pt_pptr,  /* capPTBasePtr       */
-            1,                     /* capLevel           */
             1,                     /* capPTIsMapped      */
             (word_t) lvl1pt_pptr   /* capPTMappedAddress */
         );
@@ -306,9 +304,30 @@ findVSpaceForASID_ret_t findVSpaceForASID(asid_t asid)
     return ret;
 }
 
-bool_t CONST isVTableRoot(cap_t cap)
+bool_t CONST
+isVTableRoot(cap_t cap)
 {
-    return (cap_get_capType(cap) == cap_page_table_cap) && (cap_page_table_cap_get_capLevel(cap) == 1);
+    findVSpaceForASID_ret_t  find_ret;
+    bool_t isValid = false;
+
+    if (cap_get_capType(cap) == cap_page_table_cap) {
+        find_ret = findVSpaceForASID(cap_page_table_cap_get_capPTMappedASID(cap));
+        if (find_ret.status == EXCEPTION_NONE) {
+            if ((word_t) find_ret.vspace_root == cap_page_table_cap_get_capPTBasePtr(cap)) {
+                isValid = true;
+            }
+        }
+    }
+
+    if(!isValid)
+    printf("WTF?\n");
+    return isValid;
+}
+
+bool_t CONST
+isValidVTableRoot(cap_t cap)
+{
+    return isVTableRoot(cap);
 }
 
 bool_t CONST isValidNativeRoot(cap_t cap)
@@ -365,6 +384,15 @@ lookupIPCBuffer(bool_t isReceiver, tcb_t *thread)
     }
 }
 
+static inline pptr_t getPPtrFromHWPTE(pte_t *pte)
+{
+    return ptrFromPAddr((pte->words[0] >> PTE_PPN_SHIFT) << (seL4_PageTableBits));
+}
+
+static inline pptr_t isValidHWPageTable(pte_t *pte)
+{
+    return (pte->words[0] & 0xf) == 1;
+}
 
 lookupPTSlot_ret_t
 lookupPTSlot(pte_t *lvl1pt, vptr_t vptr, uint32_t ptLevel)
@@ -390,12 +418,52 @@ lookupPTSlot(pte_t *lvl1pt, vptr_t vptr, uint32_t ptLevel)
             ret.status = EXCEPTION_LOOKUP_FAULT;
             return ret;
         } else {
-            pt = ptrFromPAddr((ret.ptSlot->words[0] >> 10) << RISCV_4K_PageBits);
+            pt = (pte_t *) getPPtrFromHWPTE(ret.ptSlot);
             ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
         }
     }
 
     ret.status = EXCEPTION_NONE;
+    return ret;
+}
+
+static lookupPTSlot_ret_t lookupPageTableLevelSlot(asid_t asid, vptr_t vptr, pptr_t pt_pptr)
+{
+    findVSpaceForASID_ret_t find_ret;
+    lookupPTSlot_ret_t ret;
+    pte_t* pt;
+    paddr_t pt_paddr;
+
+    assert(ptLevel <= CONFIG_PT_LEVELS);
+
+    find_ret = findVSpaceForASID(asid);
+    if (unlikely(find_ret.status != EXCEPTION_NONE)) {
+        userError("Couldn't find a root vspace for asid");
+        ret.status = EXCEPTION_LOOKUP_FAULT;
+        return ret;
+    } else {
+        ret.ptSlot = find_ret.vspace_root + RISCV_GET_PT_INDEX(vptr, 1);
+    }
+
+    for (int i = 2; i <= CONFIG_PT_LEVELS; i++) {
+        if (unlikely(!isValidHWPageTable(ret.ptSlot))) {
+            userError("Page table walk terminated, failed to find a PT");
+            ret.status = EXCEPTION_LOOKUP_FAULT;
+        } else if (getPPtrFromHWPTE(ret.ptSlot) == pt_pptr) {
+            /* Found the PT Slot */
+            ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
+            ret.status = EXCEPTION_NONE;
+            return ret;
+        } else {
+            /* Go to the next PT level */
+            pt = (void *) getPPtrFromHWPTE(ret.ptSlot);
+            ret.ptSlot = pt + RISCV_GET_PT_INDEX(vptr, i);
+        }
+    }
+
+    /* Failed to find a corredponding PT  */
+    userError("Couldn't find a corresponding PT in HW to delete");
+    ret.status = EXCEPTION_LOOKUP_FAULT;
     return ret;
 }
 
@@ -463,7 +531,6 @@ exception_t performASIDPoolInvocation(asid_t asid, asid_pool_t* poolPtr, cte_t* 
 {
     pte_t *regionBase = PTE_PTR(cap_page_table_cap_get_capPTBasePtr(vspaceCapSlot->cap));
     cap_t cap = vspaceCapSlot->cap;
-    cap = cap_page_table_cap_set_capLevel(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     vspaceCapSlot->cap = cap;
@@ -485,6 +552,7 @@ void deleteASID(asid_t asid, pte_t *vspace)
 {
     asid_pool_t* poolPtr;
 
+    printf("deleting an asid?\n");
     poolPtr = riscvKSASIDTable[asid >> asidLowBits];
     hwASIDInvalidate(asid);
     if (poolPtr != NULL && poolPtr->array[asid & MASK(asidLowBits)] == vspace) {
@@ -524,19 +592,19 @@ pageTableMapped(asid_t asid, vptr_t vaddr, pte_t* pt, uint32_t ptLevel)
 }
 
 void
-unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt, uint32_t ptLevel)
+unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt)
 {
+    lookupPTSlot_ret_t pt_ret;
     pte_t *pt_pptr, *ptSlot;
-    uint32_t lvl1ptIndex;
 
-    /* Invalidate the (level - 1) PTE the has the mapping for ptLevel PT */
-    pt_pptr = pageTableMapped(asid, vaddr, pt, ptLevel - 1);
+    pt_ret = lookupPageTableLevelSlot(asid, vaddr, (pptr_t) pt);
+    if (pt_ret.status != EXCEPTION_NONE) {
+        return;
+    }
 
-    if (likely(pt != NULL)) {
+    //pt_pptr = pageTableMapped(asid, vaddr, pt, ptLevel - 1);
 
-        ptSlot = pt_pptr;
-
-        *ptSlot = pte_new(
+        *pt_ret.ptSlot = pte_new(
                       0,  /* phy_address */
                       0,  /* sw */
                       0,  /* dirty */
@@ -549,7 +617,6 @@ unmapPageTable(asid_t asid, vptr_t vaddr, pte_t* pt, uint32_t ptLevel)
                       0  /* valid */
                   );
         asm volatile ("sfence.vma");
-    }
 }
 
 static pte_t pte_pte_invalid_new(void)
@@ -592,8 +659,7 @@ setVMRoot(tcb_t *tcb)
 
     threadRoot = TCB_PTR_CTE_PTR(tcb, tcbVTable)->cap;
 
-    if (cap_get_capType(threadRoot) != cap_page_table_cap ||
-            cap_page_table_cap_get_capLevel(threadRoot) != 1 ) {
+    if (!isVTableRoot(threadRoot)) {
         setVSpaceRoot(addrFromPPtr(kernel_pageTables[0]), 0);
         return;
     }
@@ -608,12 +674,6 @@ setVMRoot(tcb_t *tcb)
     }
 
     riscv_vm_contextSwitch(lvl1pt, asid);
-}
-
-bool_t CONST
-isValidVTableRoot(cap_t cap)
-{
-    return (cap_get_capType(cap) == cap_page_table_cap) && (cap_page_table_cap_get_capLevel(cap) == 1);
 }
 
 exception_t
@@ -684,7 +744,7 @@ checkVPAlignment(vm_page_size_t sz, word_t w)
 static exception_t
 decodeRISCVPageTableInvocation(word_t label, unsigned int length,
                                cte_t *cte, cap_t cap, extra_caps_t extraCaps,
-                               word_t *buffer, uint32_t ptLevel)
+                               word_t *buffer)
 {
     word_t vaddr, lvl1ptIndex;
     vm_attributes_t attr;
@@ -696,10 +756,11 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
     asid_t          asid;
 
     /* No invocations at level 1 page table (aka page directory) are not supported */
-    if (ptLevel == 1) {
+    /*
+    if (isRoot) {
         current_syscall_error.type = seL4_IllegalOperation;
         return EXCEPTION_SYSCALL_ERROR;
-    }
+    }*/
 
     if (label == RISCVPageTableUnmap) {
         setThreadState(NODE_STATE(ksCurThread), ThreadState_Restart);
@@ -734,7 +795,7 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         return EXCEPTION_SYSCALL_ERROR;
     }
 
-    if (unlikely(cap_page_table_cap_get_capLevel(lvl1ptCap) != 1)) {
+    if (unlikely(!isVTableRoot(lvl1ptCap))) {
         current_syscall_error.type = seL4_InvalidCapability;
         current_syscall_error.invalidCapNumber = 1;
 
@@ -770,14 +831,12 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
         }
     }
 
-    /* Check if there's a "ptLevel - 1" PT to map "ptLevel" PT in */
-
     /* Try to map the PT at the last level to figure out which level should
      * this PT be mapped in. The functions returns the ptSlot of ptLevel -1
      * that this newly PT should be installed at.
      */
     lu_ret = lookupPTSlot(lvl1pt, vaddr, CONFIG_PT_LEVELS);
-    ptLevel = lu_ret.missingPTLevel;
+    uint32_t ptLevel = lu_ret.missingPTLevel;
 
     /* Get the slot to install the PT in */
     ptSlot = lu_ret.ptSlot;
@@ -803,7 +862,6 @@ decodeRISCVPageTableInvocation(word_t label, unsigned int length,
               1 /* valid */
           );
 
-    cap = cap_page_table_cap_set_capLevel(cap, ptLevel);
     cap = cap_page_table_cap_set_capPTIsMapped(cap, 1);
     cap = cap_page_table_cap_set_capPTMappedASID(cap, asid);
     cap = cap_page_table_cap_set_capPTMappedAddress(cap, vaddr);
@@ -901,7 +959,7 @@ decodeRISCVFrameInvocation(word_t label, unsigned int length,
             return EXCEPTION_SYSCALL_ERROR;
         }
 
-        if (unlikely(cap_page_table_cap_get_capLevel(lvl1ptCap) != 1)) {
+        if (unlikely(!isVTableRoot(lvl1ptCap))) {
             current_syscall_error.type =
                 seL4_InvalidCapability;
             current_syscall_error.invalidCapNumber = 1;
@@ -1019,12 +1077,10 @@ decodeRISCVMMUInvocation(word_t label, unsigned int length, cptr_t cptr,
                          cte_t *cte, cap_t cap, extra_caps_t extraCaps,
                          word_t *buffer)
 {
-    uint8_t ptLevel = cap_page_table_cap_get_capLevel(cap);
-
     switch (cap_get_capType(cap)) {
 
     case cap_page_table_cap:
-        return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer, ptLevel);
+        return decodeRISCVPageTableInvocation(label, length, cte, cap, extraCaps, buffer);
 
     case cap_frame_cap:
         return decodeRISCVFrameInvocation(label, length, cte, cap, extraCaps, buffer);
@@ -1184,8 +1240,7 @@ performPageTableInvocationUnmap(cap_t cap, cte_t *ctSlot)
         unmapPageTable(
             cap_page_table_cap_get_capPTMappedASID(cap),
             cap_page_table_cap_get_capPTMappedAddress(cap),
-            pt,
-            cap_page_table_cap_get_capLevel(cap)
+            pt
         );
         clearMemory((void *)pt, RISCV_4K_PageBits);
     }

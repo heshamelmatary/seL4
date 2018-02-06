@@ -48,7 +48,7 @@ void copyGlobalMappings(pte_t *newlvl1pt);
 word_t* PURE lookupIPCBuffer(bool_t isReceiver, tcb_t *thread);
 lookupPTSlot_ret_t lookupPTSlot(pte_t *lvl1pt, vptr_t vptr, uint32_t ptLevel);
 exception_t handleVMFault(tcb_t *thread, vm_fault_type_t vm_faultType);
-void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt, uint32_t ptLevel);
+void unmapPageTable(asid_t, vptr_t vaddr, pte_t* pt);
 bool_t CONST isValidVTableRoot(cap_t cap);
 exception_t checkValidIPCBuffer(vptr_t vptr, cap_t cap);
 vm_rights_t CONST maskVMRights(vm_rights_t vm_rights,
