@@ -88,7 +88,7 @@ menu "seL4 System"
         bool
         default n
 
-    config ARM_CORTEX_A8 
+    config ARM_CORTEX_A8
         bool
         default n
 
@@ -457,7 +457,7 @@ menu "seL4 System Parameters"
 
 config AARCH32_FPU_ENABLE_CONTEXT_SWITCH
     bool "Enable hardware VFP and SIMD context switch"
-    depends on ARCH_AARCH32 && !ARCH_ARM_V6 && !VERIFICATION_BUILD 
+    depends on ARCH_AARCH32 && !ARCH_ARM_V6 && !VERIFICATION_BUILD
     select HAVE_FPU
     default y
     help
@@ -465,6 +465,14 @@ config AARCH32_FPU_ENABLE_CONTEXT_SWITCH
         hardware support, allowing the user to execute hardware VFP and SIMD
         operations in a multithreading environment, instead of relying on
         software emulation of FPU/VFP from the C library (e.g. mfloat-abi=soft).
+
+config RISCV_FPU_ENABLE_CONTEXT_SWITCH
+    bool "Enable hardware FPU"
+    depends on ARCH_RISCV
+    select HAVE_FPU
+    default y
+    help
+        This enables FPU, if HW supports it
 
 config FPU_MAX_RESTORES_SINCE_SWITCH
     int "Max thread restores without switching FPU"
@@ -480,7 +488,7 @@ config FPU_MAX_RESTORES_SINCE_SWITCH
 endmenu
 
 menu "Build Options"
-   
+
     config VERIFICATION_BUILD
         bool "Disable verification unfriendly features"
         default n
@@ -640,7 +648,7 @@ menu "Build Options"
         depends on ARCH_X86 || PLAT_HIKEY
         default n
         help
-            On ia32 platforms, this option disables the L2 hardware prefetcher, the L2 
+            On ia32 platforms, this option disables the L2 hardware prefetcher, the L2
             adjacent cache line prefetcher, the DCU prefetcher and the DCU IP prefetcher.
             On the cortex a53 this disables the L1 Data prefetcher.
 
@@ -650,7 +658,7 @@ menu "Build Options"
         range 1 7
         depends on PLAT_HIKEY && !DEBUG_DISABLE_PREFETCHERS
         help
-            Cortex A53 has an L1 Data prefetcher. This config options allows 
+            Cortex A53 has an L1 Data prefetcher. This config options allows
             the number of outstanding prefetcher to be set from a number from
             1 to 7. Note that a setting of 7 maps to 8 and 5 is the reset value.
 

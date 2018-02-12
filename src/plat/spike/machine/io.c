@@ -15,6 +15,8 @@
 #include <arch/machine.h>
 #include <arch/sbi.h>
 #include <arch/kernel/traps.h>
+#include <machine/fpu.h>
+#include <arch/machine/fpu.h>
 
 #define KNRM  "\x1B[0m"
 #define KRED  "\x1B[31m"
@@ -96,6 +98,20 @@ void handle_exception(void)
         handleVMFaultEvent(scause);
         break;
     case 2:
+#if defined(CONFIG_HAVE_FPU)
+    /* We assume the first fault is a FP exception and enable FPU, if not already enabled */
+    if (!isFpuEnable()) {
+        handleFPUFault();
+
+        /* Restart the FP instruction that cause the fault */
+        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+    } else {
+        handleUserLevelFault(0, 0);
+    }
+
+    restore_user_context();
+    UNREACHABLE();
+#endif
         handleUserLevelFault(0, 0);
         break;
     default:

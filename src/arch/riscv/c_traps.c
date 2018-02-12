@@ -17,6 +17,7 @@
 #include <api/syscall.h>
 #include <util.h>
 #include <arch/machine/hardware.h>
+#include <machine/fpu.h>
 
 #include <benchmark/benchmark_track.h>
 #include <benchmark/benchmark_utilisation.h>
@@ -29,6 +30,10 @@ void VISIBLE NORETURN restore_user_context(void)
     c_exit_hook();
 
     NODE_UNLOCK_IF_HELD;
+
+#ifdef CONFIG_HAVE_FPU
+    lazyFPURestore(NODE_STATE(ksCurThread));
+#endif /* CONFIG_HAVE_FPU */
 
     asm volatile(
         "mv t0, %[cur_thread]       \n"
