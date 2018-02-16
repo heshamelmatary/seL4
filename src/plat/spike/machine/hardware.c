@@ -147,7 +147,7 @@ static inline int read_current_timer(unsigned long *timer_val)
 void
 resetTimer(void)
 {
-    sbi_set_timer(get_cycles() + (0xfffff));
+    sbi_set_timer(get_cycles() + (0x3ffff));
 }
 
 /**
