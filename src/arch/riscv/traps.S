@@ -70,15 +70,6 @@ trap_entry:
   csrr x1, sstatus
   STORE x1, (32*REGBYTES)(t0)
 
-  /* disable all "supervisor" interrupts (i.e. timer and IPI) */
-  csrw sstatus, x0
-
-  /* disable all "supervisor" interrupts (i.e. timer and IPI) */
-  csrw sstatus, x0
-
-  /* disable all "supervisor" interrupts (i.e. timer and IPI) */
-  csrw sstatus, x0
-
   csrr s0, scause
   STORE s0, (31*REGBYTES)(t0)
 

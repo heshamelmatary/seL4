@@ -112,8 +112,8 @@ typedef struct user_context user_context_t;
 
 static inline void Arch_initContext(user_context_t* context)
 {
-    /* Enable user and supervisor interrupts */
-    context->registers[SSTATUS] = SSTATUS_SPIE | SSTATUS_SIE;
+    /* Enable supervisor interrupts (when going to user-mode) */
+    context->registers[SSTATUS] = SSTATUS_SPIE;
 }
 
 static inline word_t CONST
