@@ -17,32 +17,31 @@
 #include <util.h>
 
 #ifdef CONFIG_HAVE_FPU
-extern bool_t isFPUEnabledCached[CONFIG_MAX_NUM_NODES];
-
 static inline bool_t isDirtyFPU(void)
 {
+    word_t sstatus = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS];
     /* Check SD Flag in sstatus */
-    return (read_csr(sstatus) & BIT(CONFIG_WORD_SIZE - 1));
+    return !!(sstatus & BIT(CONFIG_WORD_SIZE - 1));
 }
 
 static inline bool_t cleanFPUState(void)
 {
-    word_t sstatus = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS] ;
+    word_t sstatus = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS];
     sstatus = (sstatus & ~SSTATUS_FS) | SSTATUS_FS_CLEAN;
     NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS] = sstatus;
-    write_csr(sstatus, sstatus);
 }
 
 /* Store state in the FPU registers into memory. */
 static inline void saveFpuState(user_fpu_state_t *dest)
 {
+    word_t temp_fcsr = 0;
 
     if (isDirtyFPU()) {
-
-        word_t temp_fcsr = 0;
-
         /* Save FPU state */
         asm volatile(
+            "csrr %[temp_fcsr], fcsr\n"
+            STORE_S " %[temp_fcsr], 0(%[fcsr])\n"
+
             FSTORE_S "  f0, (0*%[FREGSIZE])(%[fpregs])\n"
             FSTORE_S "  f1, (1*%[FREGSIZE])(%[fpregs])\n"
             FSTORE_S "  f2, (2*%[FREGSIZE])(%[fpregs])\n"
@@ -76,13 +75,10 @@ static inline void saveFpuState(user_fpu_state_t *dest)
             FSTORE_S "  f30, (30*%[FREGSIZE])(%[fpregs])\n"
             FSTORE_S "  f31, (31*%[FREGSIZE])(%[fpregs])\n"
 
-            "csrr %[temp_fcsr], fcsr\n"
-            STORE_S " %[temp_fcsr], 0(%[fcsr])\n"
-
-            : [temp_fcsr] "=r" (temp_fcsr)
+            : [temp_fcsr] "+r" (temp_fcsr)
             : [fpregs] "r" (&dest->fpregs[0]),
-              [fcsr] "r" (&dest->fcsr),
-              [FREGSIZE] "i" (sizeof(dest->fpregs[0]))
+            [fcsr] "r" (&dest->fcsr),
+            [FREGSIZE] "i" (sizeof(dest->fpregs[0]))
             : "memory"
         );
 
@@ -97,8 +93,6 @@ static inline void loadFpuState(user_fpu_state_t *src)
 
     /* FPU is not off */
     if (!isDirtyFPU()) {
-        /* load */
-
         word_t temp_fcsr = 0;
 
         asm volatile(
@@ -137,30 +131,36 @@ static inline void loadFpuState(user_fpu_state_t *src)
 
             LOAD_S " %[temp_fcsr], 0(%[fcsr])\n"
             "csrw fcsr, %[temp_fcsr]\n"
-            : [temp_fcsr] "=r" (temp_fcsr)
+
+            : [temp_fcsr] "+r" (temp_fcsr)
             : [fpregs] "r" (&src->fpregs[0]),
-              [fcsr] "r" (&src->fcsr),
-              [FREGSIZE] "i" (sizeof(src->fpregs[0]))
+            [fcsr] "r" (&src->fcsr),
+            [FREGSIZE] "i" (sizeof(src->fpregs[0]))
         );
 
         /* set fpu to clean state */
-        cleanFPUState();
+        //cleanFPUState();
     } else {
-        printf("That's wrong, FPU restore should never be dirty\n");
+        printf("FPU restore should never be dirty\n");
     }
 }
 
 /* Check if FPU is enable */
 static inline bool_t isFpuEnable(void)
 {
-    return !!(read_csr(sstatus) & SSTATUS_FS);
+    word_t sstatus = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS];
+    return !!(sstatus & SSTATUS_FS);
 }
 
 /* Enable the FPU to be used without faulting.
  * Required even if the kernel attempts to use the FPU. */
 static inline void enableFpu(void)
 {
-    cleanFPUState();
+    word_t sstatus = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS];
+    sstatus |=  SSTATUS_FS_INITIAL;
+    NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS] = sstatus;
+
+    write_csr(sstatus, sstatus);
 }
 #endif /* CONFIG_HAVE_FPU */
 
@@ -170,7 +170,5 @@ static inline void disableFpu(void)
     word_t sstatus = NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS];
     sstatus &=  ~SSTATUS_FS;
     NODE_STATE(ksCurThread)->tcbArch.tcbContext.registers[SSTATUS] = sstatus;
-    //write_csr(sstatus, sstatus);
-    clear_csr(sstatus, SSTATUS_FS);
 }
 #endif /* __ARCH_MACHINE_FPU_H */

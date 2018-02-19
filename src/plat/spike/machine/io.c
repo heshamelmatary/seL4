@@ -99,20 +99,19 @@ void handle_exception(void)
         break;
     case 2:
 #if defined(CONFIG_HAVE_FPU)
-    /* We assume the first fault is a FP exception and enable FPU, if not already enabled */
-    if (!isFpuEnable()) {
-        handleFPUFault();
+        /* We assume the first fault is a FP exception and enable FPU, if not already enabled */
+        if (!isFpuEnable()) {
+            handleFPUFault();
 
-        /* Restart the FP instruction that cause the fault */
-        setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
-    } else {
+            /* Restart the FP instruction that caused the fault */
+            setNextPC(NODE_STATE(ksCurThread), getRestartPC(NODE_STATE(ksCurThread)));
+        } else {
+            handleUserLevelFault(0, 0);
+        }
+#else
         handleUserLevelFault(0, 0);
-    }
-
-    restore_user_context();
-    UNREACHABLE();
 #endif
-        handleUserLevelFault(0, 0);
+
         break;
     default:
         print_format_cause(scause);

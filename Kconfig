@@ -470,7 +470,7 @@ config RISCV_FPU_ENABLE_CONTEXT_SWITCH
     bool "Enable hardware FPU"
     depends on ARCH_RISCV
     select HAVE_FPU
-    default y
+    default n
     help
         This enables FPU, if HW supports it
 
