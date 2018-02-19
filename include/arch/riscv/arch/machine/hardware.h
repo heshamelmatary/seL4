@@ -48,6 +48,17 @@ enum vm_fault_type {
 };
 typedef uint32_t vm_fault_type_t;
 
+enum frameSizeConstants {
+    RISCVPageBits        = RISCV_4K_PageBits,
+    RISCVMegaPageBits    = RISCV_Mega_PageBits,
+#if CONFIG_PT_LEVELS > 2
+    RISCVGigaPageBits    = RISCV_Giga_PageBits,
+#endif
+#if CONFIG_PT_LEVELS == 4
+    RISCVTeraPageBits    = RISCV_Tera_PageBits
+#endif
+};
+
 enum vm_page_size {
     RISCV_4K_Page,
     RISCV_Mega_Page,
@@ -65,19 +76,19 @@ pageBitsForSize(vm_page_size_t pagesize)
 {
     switch (pagesize) {
     case RISCV_4K_Page:
-        return RISCV_4K_PageBits;
+        return RISCVPageBits;
 
     case RISCV_Mega_Page:
-        return RISCV_Mega_PageBits;
+        return RISCVMegaPageBits;
 
 #if CONFIG_PT_LEVELS > 2
     case RISCV_Giga_Page:
-        return RISCV_Giga_PageBits;
+        return RISCVGigaPageBits;
 #endif
 
 #if CONFIG_PT_LEVELS == 4
     case RISCV_Tera_Page:
-        return RISCV_Tera_PageBits;
+        return RISCVTeraPageBits;
 #endif
 
     default:
