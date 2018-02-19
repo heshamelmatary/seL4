@@ -29,7 +29,6 @@ typedef seL4_Word seL4_NodeId;
 typedef seL4_Word seL4_PAddr;
 typedef seL4_Word seL4_Domain;
 
-#define seL4_PageBits        12
 #define seL4_EndpointBits     4
 /* User context as used by seL4_TCB_ReadRegisters / seL4_TCB_WriteRegisters */
 

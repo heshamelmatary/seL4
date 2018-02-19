@@ -33,7 +33,6 @@
 /* Shared definitions */
 #define RISCV_4K_PageBits      12
 
-#define seL4_PageBits           12
 #define seL4_TCBBits            11
 #define seL4_EndpointBits       4
 #define seL4_PageTableBits      12
