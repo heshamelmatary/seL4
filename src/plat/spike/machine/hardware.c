@@ -134,7 +134,7 @@ static inline uint64_t get_cycles(void)
         "rdtimeh %0\n"
         "rdtime  %1\n"
         : "=r" (nH), "=r" (nL));
-    return ((uint64_t) (nH << 32)) | (nL);
+    return ((uint64_t) ((uint64_t) nH << 32)) | (nL);
 }
 #else
 {
