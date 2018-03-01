@@ -58,6 +58,10 @@
 #define SSTATUS_SPIE        0x00000020
 #define SSTATUS_SPP         0x00000100
 #define SSTATUS_FS          0x00006000
+
+#define SSTATUS_FS_CLEAN    0x00004000
+#define SSTATUS_FS_INITIAL  0x00002000
+
 #define SSTATUS_XS          0x00018000
 #define SSTATUS_SUM         0x00040000
 #define SSTATUS_MXR         0x00080000

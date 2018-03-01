@@ -121,8 +121,21 @@ RISCVpageAtPTLevel(vm_page_size_t pagesize)
 #define STORE sd
 #endif
 
+#if __riscv_flen == 32
+#define FLOAD  flw
+#define FSTORE fsw
+#elif __riscv_flen == 64
+#define FLOAD  fld
+#define FSTORE fsd
+#endif /* CONFIG_HAVE_FPU */
+
+#define _STRINGIFY(a) #a
+#define STRINGIFY(a) _STRINGIFY(a)
 
 #define LOAD_S STRINGIFY(LOAD)
 #define STORE_S STRINGIFY(STORE)
+
+#define FLOAD_S STRINGIFY(FLOAD)
+#define FSTORE_S STRINGIFY(FSTORE)
 
 #endif /* !__ARCH_MACHINE_HARDWARE_H */
